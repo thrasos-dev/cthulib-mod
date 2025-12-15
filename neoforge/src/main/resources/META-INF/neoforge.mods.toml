@@ -1,0 +1,32 @@
+modLoader = "javafml"
+loaderVersion = "[4,)"
+license = "GPL-3.0"
+
+[[mods]]
+modId = "cthulib"
+version = "${version}"
+displayName = "CthuLib"
+authors = "KevzCz, Thrasos, Pixel Dream Studios"
+description = '''
+Core utility mod for Pixel Dream Studios modpacks
+'''
+logoFile = "assets/cthulib/icon.png"
+issueTrackerURL = "https://github.com/thrasos-dev/cthulib-mod/issues"
+[[dependencies.cthulib]]
+modId = "neoforge"
+type = "required"
+versionRange = "[21.1,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.cthulib]]
+modId = "minecraft"
+type = "required"
+
+versionRange = "[1.21.1,)"
+ordering = "NONE"
+side = "BOTH"
+
+
+[[mixins]]
+config = "cthulib.mixins.json"

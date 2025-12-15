@@ -1,0 +1,15 @@
+{
+  "required": true,
+  "package": "net.pixeldreamstudios.cthulib.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "minVersion": "0.8",
+  "client": [
+    "client.TitleScreenMixin",
+    "client.OptionsScreenMixin"
+  ],
+  "mixins": [
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
