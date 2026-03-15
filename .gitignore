@@ -31,8 +31,6 @@ Thumbs.db
 **/crash-reports/
 **/mods/
 
-# If you *do* want config committed, delete the **/config/ line above.
-
 # Other common
 *.log
 *.lock

@@ -1,5 +1,6 @@
 package net.pixeldreamstudios.cthulib.client;
 
+import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.Util;
 import net.minecraft.client.gui.GuiGraphics;
@@ -41,6 +42,22 @@ public class ModsScreen extends Screen {
     private static final int LOGO_MAX_WITHOUT_NAME = 64;
     private static final int HEADER_HEIGHT = 78;
     private static final int MAX_TEXTURE_SIZE = 2048;
+    
+    // Static cache to prevent re-loading mod data on every screen open
+    private static List<ModData> cachedMods = null;
+    private static ModListWidget cachedModList = null;
+    private static int lastScreenWidth = -1;
+    private static int lastScreenHeight = -1;
+    
+    /**
+     * Call this to invalidate cache when mods change or config changes
+     */
+    public static void invalidateCache() {
+        cachedMods = null;
+        cachedModList = null;
+        lastScreenWidth = -1;
+        lastScreenHeight = -1;
+    }
 
     public ModsScreen(Screen parentScreen) {
         super(Component.literal("Mods"));
@@ -53,31 +70,48 @@ public class ModsScreen extends Screen {
 
         CthuLibConfig cfg = CthuLibConfig.get();
 
-        if (!  ModCollector.isDataReady()) {
+        // Preload mod data only if not already cached
+        if (!ModCollector.isDataReady()) {
             ModCollector.preloadModData();
         }
 
-        mods = ModCollector.getModsByConfiguredAuthors();
+        // Only recreate mod list on first init, otherwise just reuse
+        boolean isFirstInit = (lastScreenWidth == -1 && lastScreenHeight == -1);
+        
+        // Update tracked screen size
+        lastScreenWidth = width;
+        lastScreenHeight = height;
+
+        // Reuse cached mod data
+        if (cachedMods == null) {
+            cachedMods = ModCollector.getModsByConfiguredAuthors();
+        }
+        mods = cachedMods;
 
         int listTop = 45;
 
-        boolean hasHeader = (!  cfg.logoPath.isEmpty() || (cfg.showName && ! cfg.name.isEmpty()));
+        boolean hasHeader = (!cfg.logoPath.isEmpty() || (cfg.showName && !cfg.name.isEmpty()));
 
         if (hasHeader) {
             listTop = HEADER_HEIGHT;
-            if (!   cfg.logoPath.isEmpty()) {
+            if (!cfg.logoPath.isEmpty()) {
                 loadLogoAsync();
             }
         }
 
-        if (!  cfg.backgroundPath.isEmpty()) {
+        if (!cfg.backgroundPath.isEmpty()) {
             loadBackgroundAsync();
         }
 
-        modList = new ModListWidget(minecraft, width, height, listTop, height, 68);
+        // Reuse cached mod list widget - create only once
+        if (cachedModList == null || isFirstInit) {
+            cachedModList = new ModListWidget(minecraft, width, height, listTop, height, 68);
+            cachedModList.setMods(mods);
+        }
+        modList = cachedModList;
         addWidget(modList);
-        modList.setMods(mods);
         modList.setScreen(this);
+        
         closeButtonX = width - CLOSE_BUTTON_SIZE - CLOSE_BUTTON_PADDING;
         closeButtonY = CLOSE_BUTTON_PADDING;
 
@@ -127,8 +161,8 @@ public class ModsScreen extends Screen {
             }
         }).thenAcceptAsync(img -> {
             if (img != null) {
-                com.mojang.blaze3d.platform.NativeImage ni =
-                        new com.mojang.blaze3d.platform.NativeImage(img.getWidth(), img.getHeight(), true);
+                NativeImage ni =
+                        new NativeImage(img.getWidth(), img.getHeight(), true);
 
                 for (int iy = 0; iy < img.getHeight(); iy++) {
                     for (int ix = 0; ix < img.getWidth(); ix++) {
@@ -201,8 +235,8 @@ public class ModsScreen extends Screen {
             logoW = (int) (img.getWidth() * scale);
             logoH = (int) (img.getHeight() * scale);
 
-            com.mojang.blaze3d.platform.NativeImage ni =
-                    new com.mojang.blaze3d.platform.NativeImage(img.getWidth(), img.getHeight(), true);
+            NativeImage ni =
+                    new NativeImage(img.getWidth(), img.getHeight(), true);
 
             for (int y = 0; y < img.getHeight(); y++) {
                 for (int x = 0; x < img.getWidth(); x++) {
@@ -266,8 +300,8 @@ public class ModsScreen extends Screen {
         }).thenAcceptAsync(img -> {
             if (img == null) return;
 
-            com.mojang.blaze3d.platform.NativeImage ni =
-                    new com.mojang.blaze3d.platform.NativeImage(img.getWidth(), img.getHeight(), true);
+            NativeImage ni =
+                    new NativeImage(img.getWidth(), img.getHeight(), true);
 
             for (int y = 0; y < img.getHeight(); y++) {
                 for (int x = 0; x < img.getWidth(); x++) {

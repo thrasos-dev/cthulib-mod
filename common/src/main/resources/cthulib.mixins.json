@@ -5,7 +5,8 @@
   "minVersion": "0.8",
   "client": [
     "client.TitleScreenMixin",
-    "client.OptionsScreenMixin"
+    "client.OptionsScreenMixin",
+    "client.OptionsMixin"
   ],
   "mixins": [
   ],

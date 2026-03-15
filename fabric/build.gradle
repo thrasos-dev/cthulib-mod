@@ -32,6 +32,19 @@ dependencies {
 
     common(project(path: ':common', configuration: 'namedElements')) { transitive = false }
     shadowBundle project(path: ':common', configuration: 'transformProductionFabric')
+    modCompileOnly("com.terraformersmc:modmenu:11.0.3")
+    implementation('org.sejda.imageio:webp-imageio:0.1.6') {
+        transitive = true
+    }
+    include('org.sejda.imageio:webp-imageio:0.1.6') {
+        transitive = true
+    }
+    implementation('com.vladsch.flexmark:flexmark-html2md-converter:0.64.8') {
+        transitive = true
+    }
+    include('com.vladsch.flexmark:flexmark-html2md-converter:0.64.8') {
+        transitive = true
+    }
 }
 
 processResources {

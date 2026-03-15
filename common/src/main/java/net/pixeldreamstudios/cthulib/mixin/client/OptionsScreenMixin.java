@@ -7,6 +7,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.pixeldreamstudios.cthulib.client.BrightnessImageButton;
 import net.pixeldreamstudios.cthulib.client.ModsScreen;
+import net.pixeldreamstudios.cthulib.client.UIElementPositionManager;
 import net.pixeldreamstudios.cthulib.config.CthuLibConfig;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -39,7 +40,9 @@ public abstract class OptionsScreenMixin extends Screen {
 
         ResourceLocation buttonLocation;
         try {
-            buttonLocation = ResourceLocation.parse(cfg.buttonLogo);
+            String texturePath = (cfg.brightnessButtonTexture != null && !cfg.brightnessButtonTexture.isEmpty())
+                ? cfg.brightnessButtonTexture : cfg.buttonLogo;
+            buttonLocation = ResourceLocation.parse(texturePath);
         } catch (Exception e) {
             buttonLocation = ResourceLocation.fromNamespaceAndPath("cthulib", "textures/gui/button.png");
         }
@@ -48,7 +51,8 @@ public abstract class OptionsScreenMixin extends Screen {
                 x, y, 20, 20,
                 buttonLocation,
                 b -> Minecraft.getInstance().setScreen(new ModsScreen(this)),
-                Component.literal(cfg.buttonTooltip)
+                Component.literal(cfg.buttonTooltip),
+                UIElementPositionManager.ElementType.BRIGHTNESS_BUTTON_SETTINGS
         );
 
         this.addRenderableWidget(button);

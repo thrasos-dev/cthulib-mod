@@ -7,4 +7,20 @@ dependencies {
     // which get remapped to the correct annotations on each platform.
     // Do NOT use other classes from Fabric Loader.
     modImplementation "net.fabricmc:fabric-loader:$rootProject.fabric_loader_version"
+    
+    // WebP decoder from Maven Central
+    implementation('org.sejda.imageio:webp-imageio:0.1.6') {
+        transitive = true
+    }
+    include('org.sejda.imageio:webp-imageio:0.1.6') {
+        transitive = true
+    }
+    
+    // Flexmark for HTML to Markdown conversion
+    implementation('com.vladsch.flexmark:flexmark-html2md-converter:0.64.8') {
+        transitive = true
+    }
+    include('com.vladsch.flexmark:flexmark-html2md-converter:0.64.8') {
+        transitive = true
+    }
 }

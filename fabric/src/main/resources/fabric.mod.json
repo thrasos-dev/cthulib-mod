@@ -24,6 +24,9 @@
     ],
     "main": [
       "net.pixeldreamstudios.cthulib.fabric.CthuLibFabric"
+    ],
+    "modmenu": [
+      "net.pixeldreamstudios.cthulib.fabric.ModMenuIntegration"
     ]
   },
   "mixins": [

@@ -409,7 +409,7 @@ public class ModDetailPanel {
                 break;
             }
         }
-        return sb.toString() + dots;
+        return sb + dots;
     }
 
     private int lerpColor(int color1, int color2, float progress) {

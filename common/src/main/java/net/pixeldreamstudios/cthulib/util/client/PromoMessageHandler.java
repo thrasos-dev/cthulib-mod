@@ -1,11 +1,14 @@
 package net.pixeldreamstudios.cthulib.util.client;
 
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 import net.pixeldreamstudios.cthulib.config.PromoMessageConfig;
+
+import java.util.List;
 
 public class PromoMessageHandler {
 
@@ -30,7 +33,7 @@ public class PromoMessageHandler {
         }
     }
 
-    private static Component buildMessage(java.util.List<PromoMessageConfig.MessagePart> parts) {
+    private static Component buildMessage(List<PromoMessageConfig.MessagePart> parts) {
         if (parts.isEmpty()) return Component.empty();
 
         Component message = Component.empty();
@@ -39,7 +42,7 @@ public class PromoMessageHandler {
             Style style = Style.EMPTY;
 
             if (! part.color.isEmpty()) {
-                style = style.withColor(net.minecraft.ChatFormatting.getByName(part.color));
+                style = style.withColor(ChatFormatting.getByName(part.color));
             }
 
             if (part.bold) {

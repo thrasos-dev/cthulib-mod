@@ -1,5 +1,6 @@
 package net.pixeldreamstudios.cthulib.client;
 
+import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.ResourceLocation;
@@ -23,8 +24,8 @@ public class ModIconLoader {
     }
     public static ResourceLocation registerIcon(String modId, BufferedImage img) {
         try {
-            com.mojang.blaze3d.platform.NativeImage ni =
-                    new com.mojang.blaze3d.platform.NativeImage(img.getWidth(), img.getHeight(), true);
+            NativeImage ni =
+                    new NativeImage(img.getWidth(), img.getHeight(), true);
 
             for (int y = 0; y < img.getHeight(); y++) {
                 for (int x = 0; x < img.getWidth(); x++) {

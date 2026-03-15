@@ -442,7 +442,7 @@ public class ModListWidget extends ObjectSelectionList<ModListWidget.ModRow> {
                     break;
                 }
             }
-            return sb.toString() + dots;
+            return sb + dots;
         }
 
         private int lerpColor(int color1, int color2, float progress) {
@@ -479,7 +479,7 @@ public class ModListWidget extends ObjectSelectionList<ModListWidget.ModRow> {
                 if (checkCardClick(mouseX, mouseY, rowLeft, colWidth, leftMod)) return true;
                 if (rightMod != null) {
                     int rightCardX = rowLeft + colWidth + COLUMN_GAP;
-                    if (checkCardClick(mouseX, mouseY, rightCardX, colWidth, rightMod)) return true;
+                    return checkCardClick(mouseX, mouseY, rightCardX, colWidth, rightMod);
                 }
             }
             return false;
