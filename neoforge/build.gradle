@@ -37,8 +37,8 @@ dependencies {
     common(project(path: ':common', configuration: 'namedElements')) { transitive = false }
     shadowBundle project(path: ':common', configuration: 'transformProductionNeoForge')
 
-    implementation 'org.sejda.imageio:webp-imageio:0.1.6'
-    shadowBundle 'org.sejda.imageio:webp-imageio:0.1.6'
+    implementation 'com.github.usefulness:webp-imageio:0.10.2'
+    shadowBundle 'com.github.usefulness:webp-imageio:0.10.2'
     implementation 'com.vladsch.flexmark:flexmark-html2md-converter:0.64.8'
     shadowBundle 'com.vladsch.flexmark:flexmark-html2md-converter:0.64.8'
 }

@@ -1,6 +1,5 @@
 package net.pixeldreamstudios.cthulib.client;
 
-import com.luciad.imageio.webp.WebPImageReaderSpi;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.Util;
@@ -16,8 +15,6 @@ import net.pixeldreamstudios.cthulib.config.CthuLibConfig;
 import net.pixeldreamstudios.cthulib.util.ChangelogCache;
 
 import javax.imageio.ImageIO;
-import javax.imageio.ImageReader;
-import javax.imageio.stream.ImageInputStream;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
@@ -679,17 +676,23 @@ public class ChangelogViewer extends Screen {
         cacheDir.mkdirs();
         File cacheFile = new File(cacheDir, hash + ".png");
         
+        synchronized (downloadingImages) {
+            if (downloadingImages.getOrDefault(url, false)) {
+                return null;
+            }
+        }
+
         if (cacheFile.exists()) {
             try {
                 FileInputStream fis = new FileInputStream(cacheFile);
                 BufferedImage bufferedImage = ImageIO.read(fis);
                 fis.close();
-                
+
                 if (bufferedImage != null) {
                     imageDimensions.put(url, new ImageData(bufferedImage.getWidth(), bufferedImage.getHeight()));
-                    
+
                     NativeImage nativeImage = convertBufferedImageToNativeImage(bufferedImage);
-                    
+
                     DynamicTexture dynamicTexture = new DynamicTexture(nativeImage);
                     minecraft.getTextureManager().register(location, dynamicTexture);
                     imageCache.put(url, location);
@@ -702,7 +705,7 @@ public class ChangelogViewer extends Screen {
                 cacheFile.delete();
             }
         }
-        
+
         synchronized (downloadingImages) {
             if (downloadingImages.getOrDefault(url, false)) {
                 return null;
@@ -730,34 +733,9 @@ public class ChangelogViewer extends Screen {
                 inputStream.close();
                 
                 BufferedImage bufferedImage = null;
-                
-                if (url.toLowerCase().endsWith(".webp")) {
-                    try {
-                        WebPImageReaderSpi readerSpi = new WebPImageReaderSpi();
-                        FileInputStream fis = new FileInputStream(tempFile);
-                        ImageInputStream iis = ImageIO.createImageInputStream(fis);
-                        
-                        if (readerSpi.canDecodeInput(iis)) {
-                            ImageReader reader = readerSpi.createReaderInstance();
-                            reader.setInput(iis);
-                            bufferedImage = reader.read(0);
-                            reader.dispose();
-                        }
-                        
-                        iis.close();
-                        fis.close();
-                    } catch (Exception e) {
-
-                    }
-                }
-                
-                if (bufferedImage == null) {
-                    try {
-                        FileInputStream fis = new FileInputStream(tempFile);
-                        bufferedImage = ImageIO.read(fis);
-                        fis.close();
-                    } catch (Exception e) {
-                    }
+                try {
+                    bufferedImage = ImageIO.read(tempFile);
+                } catch (Exception e) {
                 }
                 
                 tempFile.delete();

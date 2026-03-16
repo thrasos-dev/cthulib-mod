@@ -8,8 +8,8 @@ dependencies {
     // Do NOT use other classes from Fabric Loader.
     modImplementation "net.fabricmc:fabric-loader:$rootProject.fabric_loader_version"
     
-    // WebP decoder from Maven Central
-    implementation 'org.sejda.imageio:webp-imageio:0.1.6'
+    // WebP decoder (with arm64 support)
+    implementation 'com.github.usefulness:webp-imageio:0.10.2'
 
     // Flexmark for HTML to Markdown conversion
     implementation 'com.vladsch.flexmark:flexmark-html2md-converter:0.64.8'

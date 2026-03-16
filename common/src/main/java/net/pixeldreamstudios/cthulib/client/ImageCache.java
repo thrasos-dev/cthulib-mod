@@ -1,6 +1,5 @@
 package net.pixeldreamstudios.cthulib.client;
 
-import com.luciad.imageio.webp.WebPImageReaderSpi;
 import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
@@ -8,8 +7,6 @@ import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.ResourceLocation;
 
 import javax.imageio.ImageIO;
-import javax.imageio.ImageReader;
-import javax.imageio.stream.ImageInputStream;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
@@ -122,37 +119,11 @@ public class ImageCache {
     }
     
     private static BufferedImage loadImage(File file, String imageUrl) {
-        BufferedImage bufferedImage = null;
-        
-        if (imageUrl.toLowerCase().endsWith(".webp")) {
-            try {
-                WebPImageReaderSpi readerSpi = new WebPImageReaderSpi();
-                FileInputStream fis = new FileInputStream(file);
-                ImageInputStream iis = ImageIO.createImageInputStream(fis);
-                
-                if (readerSpi.canDecodeInput(iis)) {
-                    ImageReader reader = readerSpi.createReaderInstance();
-                    reader.setInput(iis);
-                    bufferedImage = reader.read(0);
-                    reader.dispose();
-                }
-                
-                iis.close();
-                fis.close();
-            } catch (Exception e) {
-            }
+        try {
+            return ImageIO.read(file);
+        } catch (Exception e) {
+            return null;
         }
-        
-        if (bufferedImage == null) {
-            try {
-                FileInputStream fis = new FileInputStream(file);
-                bufferedImage = ImageIO.read(fis);
-                fis.close();
-            } catch (Exception e) {
-            }
-        }
-        
-        return bufferedImage;
     }
     
     private static NativeImage convertToNativeImage(BufferedImage bufferedImage) {
