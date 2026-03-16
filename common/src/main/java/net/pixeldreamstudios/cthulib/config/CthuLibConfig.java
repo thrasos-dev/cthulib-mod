@@ -23,6 +23,12 @@ public class CthuLibConfig {
     public int buttonYtitleScreen = 0;
     public int buttonXsettings = 0;
     public int buttonYsettings = 0;
+    public int modlistButtonWidth = 20;
+    public int modlistButtonHeight = 20;
+    public float modlistButtonScale = 1.0f;
+    public boolean modlistButtonScaleWithScreen = false;
+    public float modlistButtonMinScale = 0.5f;
+    public float modlistButtonMaxScale = 1.5f;
     public boolean showName = true;
     public String name = "";
     public String logoPath = "cthulib:textures/gui/pdslogo.png";
@@ -73,14 +79,19 @@ public class CthuLibConfig {
     public boolean sliderShowFilterButton = true;
     public int sliderFilterOffsetX = 0;
     public int sliderFilterOffsetY = 0;
+    public String sliderDefaultFilter = "ALL";
+    public String sliderArrowIdleColor = "4ADBFF";
+    public String sliderArrowHoverColor = "FFAA33";
+    public String sliderBlacklistedProjects = "";
+    public String sliderUnmaintainedProjects = "";
 
     public boolean showChangelogButton = true;
-    public String changelogButtonTexture = "";
+    public String changelogButtonTexture = "cthulib:textures/gui/changelog_button.png";
     public int changelogButtonX = -130;
     public int changelogButtonY = -35;
-    public int changelogButtonWidth = 120;
-    public int changelogButtonHeight = 24;
-    public float changelogButtonScale = 1.0f;
+    public int changelogButtonWidth = 50;
+    public int changelogButtonHeight = 50;
+    public float changelogButtonScale = 0.5f;
     public boolean changelogButtonScaleWithScreen = false;
     public float changelogButtonMinScale = 0.5f;
     public float changelogButtonMaxScale = 1.5f;
@@ -95,7 +106,6 @@ public class CthuLibConfig {
     public int changelogPanelHeight = 400;
     public String changelogPanelTexture = "";
     public boolean showChangelogNotification = true;
-    public String lastReadChangelogVersion = "";
     public int devModeKey1 = 80; // P key (GLFW_KEY_P)
     public int devModeKey2 = 68; // D key (GLFW_KEY_D)
     public int devModeKey3 = 83; // S key (GLFW_KEY_S)
@@ -144,8 +154,9 @@ public class CthuLibConfig {
                     needsSave = true;
                 }
 
-                String[] stringFields = {"wikiLink", "wikiLogo", "discordLink", "discordLogo", "logoPath", "name", "backgroundPath", "buttonTooltip", 
-                        "promoButtonTexture", "promoButtonTooltip", "promoButtonUrl", "changelogButtonTexture", "brightnessButtonTexture"};
+                String[] stringFields = {"wikiLink", "wikiLogo", "discordLink", "discordLogo", "logoPath", "name", "backgroundPath", "buttonTooltip",
+                        "promoButtonTexture", "promoButtonTooltip", "promoButtonUrl", "changelogButtonTexture", "brightnessButtonTexture",
+                        "sliderDefaultFilter", "sliderArrowIdleColor", "sliderArrowHoverColor", "sliderBlacklistedProjects", "sliderUnmaintainedProjects"};
                 for (String field :  stringFields) {
                     if (! existingJson.has(field)) {
                         needsSave = true;
@@ -153,6 +164,7 @@ public class CthuLibConfig {
                 }
 
                 String[] intFields = {"buttonXtitleScreen", "buttonYtitleScreen", "buttonXsettings", "buttonYsettings",
+                        "modlistButtonWidth", "modlistButtonHeight",
                         "wikiButtonX", "wikiButtonY", "discordButtonX", "discordButtonY",
                         "promoButtonX", "promoButtonY", "promoButtonWidth", "promoButtonHeight",
                         "sliderX", "sliderY", "sliderCardWidth", "sliderCardHeight", "sliderPreviewOffset",
@@ -168,7 +180,8 @@ public class CthuLibConfig {
                         "showProjectSlider", "sliderAutoSlide", "sliderShowPreviews", "sliderStartFromCenterX", "sliderStartFromCenterY", "sliderStartFromLeftX", "sliderStartFromRightX", "sliderScaleWithScreen",
                         "sliderShowFilterButton", "sliderEntryAnimationEnabled", "sliderCardTransitionEnabled",
                         "showChangelogButton", "changelogButtonScaleWithScreen", "changelogButtonStartFromCenterX", "changelogButtonStartFromCenterY", "changelogButtonStartFromLeftX", "changelogButtonStartFromRightX",
-                        "animationsEnabled", "shineEffectEnabled"};
+                        "showChangelogNotification", "animationsEnabled", "shineEffectEnabled",
+                        "modlistButtonScaleWithScreen"};
                 for (String field : boolFields) {
                     if (! existingJson.has(field)) {
                         needsSave = true;
@@ -179,7 +192,8 @@ public class CthuLibConfig {
                         "sliderEntryAnimationSpeed", "sliderFadeInSpeed", "sliderCardTransitionSpeed",
                         "changelogButtonMinScale", "changelogButtonMaxScale",
                         "hoverAnimationSpeed", "pressAnimationSpeed", "pulseAnimationSpeed", "shineAnimationSpeed",
-                        "promoButtonScale", "changelogButtonScale"};
+                        "promoButtonScale", "changelogButtonScale",
+                        "modlistButtonScale", "modlistButtonMinScale", "modlistButtonMaxScale"};
                 for (String field : floatFields) {
                     if (! existingJson.has(field)) {
                         needsSave = true;
@@ -234,6 +248,12 @@ public class CthuLibConfig {
         config.buttonYtitleScreen = 236;
         config.buttonXsettings = -1;
         config.buttonYsettings = 1;
+        config.modlistButtonWidth = 20;
+        config.modlistButtonHeight = 20;
+        config.modlistButtonScale = 1.0f;
+        config.modlistButtonScaleWithScreen = false;
+        config.modlistButtonMinScale = 0.5f;
+        config.modlistButtonMaxScale = 1.5f;
         config.showName = true;
         config.name = "";
         config.logoPath = "cthulib:textures/gui/pdslogo.png";
@@ -287,14 +307,19 @@ public class CthuLibConfig {
         config.sliderShowFilterButton = true;
         config.sliderFilterOffsetX = 58;
         config.sliderFilterOffsetY = 0;
+        config.sliderDefaultFilter = "ALL";
+        config.sliderArrowIdleColor = "4ADBFF";
+        config.sliderArrowHoverColor = "FFAA33";
+        config.sliderBlacklistedProjects = "";
+        config.sliderUnmaintainedProjects = "";
 
         config.showChangelogButton = true;
-        config.changelogButtonTexture = "";
+        config.changelogButtonTexture = "cthulib:textures/gui/changelog_button.png";
         config.changelogButtonX = -54;
         config.changelogButtonY = -176;
-        config.changelogButtonWidth = 62;
-        config.changelogButtonHeight = 14;
-        config.changelogButtonScale = 1.0f;
+        config.changelogButtonWidth = 50;
+        config.changelogButtonHeight = 50;
+        config.changelogButtonScale = 0.5f;
         config.changelogButtonScaleWithScreen = true;
         config.changelogButtonMinScale = 0.5f;
         config.changelogButtonMaxScale = 1.5f;
@@ -309,7 +334,6 @@ public class CthuLibConfig {
         config.changelogPanelHeight = 400;
         config.changelogPanelTexture = "";
         config.showChangelogNotification = true;
-        config.lastReadChangelogVersion = "";
 
         config.devModeKey1 = 80; // P key
         config.devModeKey2 = 68; // D key
@@ -341,6 +365,16 @@ public class CthuLibConfig {
         this.wikiLogo = defaults.wikiLogo;
         this.discordLogo = defaults.discordLogo;
     }
+
+    public void resetModlistButton() {
+        CthuLibConfig defaults = createDefault();
+        this.modlistButtonWidth = defaults.modlistButtonWidth;
+        this.modlistButtonHeight = defaults.modlistButtonHeight;
+        this.modlistButtonScale = defaults.modlistButtonScale;
+        this.modlistButtonScaleWithScreen = defaults.modlistButtonScaleWithScreen;
+        this.modlistButtonMinScale = defaults.modlistButtonMinScale;
+        this.modlistButtonMaxScale = defaults.modlistButtonMaxScale;
+    }
     
     public void resetPromoButton() {
         CthuLibConfig defaults = createDefault();
@@ -363,18 +397,33 @@ public class CthuLibConfig {
     
     public void resetProjectSlider() {
         CthuLibConfig defaults = createDefault();
-        this.sliderHeaderText = defaults.sliderHeaderText;
         this.showProjectSlider = defaults.showProjectSlider;
+        this.sliderHeaderText = defaults.sliderHeaderText;
         this.sliderX = defaults.sliderX;
         this.sliderY = defaults.sliderY;
         this.sliderCardWidth = defaults.sliderCardWidth;
         this.sliderCardHeight = defaults.sliderCardHeight;
+        this.sliderAutoSlide = defaults.sliderAutoSlide;
+        this.sliderAutoSlideDelay = defaults.sliderAutoSlideDelay;
+        this.sliderShowPreviews = defaults.sliderShowPreviews;
+        this.sliderPreviewScale = defaults.sliderPreviewScale;
+        this.sliderPreviewOffset = defaults.sliderPreviewOffset;
+        this.sliderScale = defaults.sliderScale;
+        this.sliderStartFromCenterX = defaults.sliderStartFromCenterX;
         this.sliderStartFromCenterY = defaults.sliderStartFromCenterY;
         this.sliderStartFromLeftX = defaults.sliderStartFromLeftX;
         this.sliderStartFromRightX = defaults.sliderStartFromRightX;
         this.sliderScaleWithScreen = defaults.sliderScaleWithScreen;
         this.sliderMinScale = defaults.sliderMinScale;
         this.sliderMaxScale = defaults.sliderMaxScale;
+        this.sliderShowFilterButton = defaults.sliderShowFilterButton;
+        this.sliderFilterOffsetX = defaults.sliderFilterOffsetX;
+        this.sliderFilterOffsetY = defaults.sliderFilterOffsetY;
+        this.sliderDefaultFilter = defaults.sliderDefaultFilter;
+        this.sliderArrowIdleColor = defaults.sliderArrowIdleColor;
+        this.sliderArrowHoverColor = defaults.sliderArrowHoverColor;
+        this.sliderBlacklistedProjects = defaults.sliderBlacklistedProjects;
+        this.sliderUnmaintainedProjects = defaults.sliderUnmaintainedProjects;
     }
     
     public void resetChangelog() {
@@ -396,7 +445,6 @@ public class CthuLibConfig {
         this.changelogPanelHeight = defaults.changelogPanelHeight;
         this.changelogPanelTexture = defaults.changelogPanelTexture;
         this.showChangelogNotification = defaults.showChangelogNotification;
-        this.lastReadChangelogVersion = defaults.lastReadChangelogVersion;
     }
 
     public void save() {

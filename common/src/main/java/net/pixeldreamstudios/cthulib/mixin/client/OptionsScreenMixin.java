@@ -5,7 +5,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.options.OptionsScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.pixeldreamstudios.cthulib.client.BrightnessImageButton;
+import net.pixeldreamstudios.cthulib.client.ModListButton;
 import net.pixeldreamstudios.cthulib.client.ModsScreen;
 import net.pixeldreamstudios.cthulib.client.UIElementPositionManager;
 import net.pixeldreamstudios.cthulib.config.CthuLibConfig;
@@ -47,7 +47,7 @@ public abstract class OptionsScreenMixin extends Screen {
             buttonLocation = ResourceLocation.fromNamespaceAndPath("cthulib", "textures/gui/button.png");
         }
 
-        BrightnessImageButton button = new BrightnessImageButton(
+        ModListButton button = new ModListButton(
                 x, y, 20, 20,
                 buttonLocation,
                 b -> Minecraft.getInstance().setScreen(new ModsScreen(this)),

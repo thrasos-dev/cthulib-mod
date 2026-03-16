@@ -5,6 +5,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.pixeldreamstudios.cthulib.client.base.DraggableTitleScreenWidget;
 import net.pixeldreamstudios.cthulib.config.CthuLibConfig;
 import net.pixeldreamstudios.cthulib.util.ChangelogCache;
@@ -13,6 +14,9 @@ public class ChangelogButton extends DraggableTitleScreenWidget {
     private final OnPress onPress;
     private float glowAnimation = 0.0f;
     private final AnimatedTooltip updateTooltip;
+    private final AnimatedTooltip changelogTooltip;
+    private String textureStr;
+    private boolean textureActive = false;
 
     private final int baseWidth;
     private final int baseHeight;
@@ -21,8 +25,10 @@ public class ChangelogButton extends DraggableTitleScreenWidget {
         super(x, y, width, height, Component.literal("Changelog"), UIElementPositionManager.ElementType.CHANGELOG_BUTTON);
         this.baseWidth = width;
         this.baseHeight = height;
+        this.textureStr = (texture != null) ? texture : "";
         this.onPress = onPress;
         this.updateTooltip = new AnimatedTooltip(Component.literal("New update available!"));
+        this.changelogTooltip = new AnimatedTooltip(Component.literal("View Changelog"));
         updatePosition();
     }
     
@@ -72,21 +78,25 @@ public class ChangelogButton extends DraggableTitleScreenWidget {
         renderShadow(graphics, renderX, renderY);
         renderGlow(graphics, renderX, renderY, pulse);
         renderButton(graphics, renderX, renderY);
-        renderText(graphics, renderX, renderY);
+        if (!textureActive) renderText(graphics, renderX, renderY);
         if (shineCfg.shineEffectEnabled) ShineEffect.renderShine(graphics, renderX, renderY, this.width, this.height, glowAnimation, hoverAnimation);
         renderNotificationBadge(graphics, renderX, renderY);
 
         if (this.isHovered()) {
             CthuLibConfig cfg = CthuLibConfig.getInstance();
-            String currentVersion = ChangelogCache.getCurrentVersion();
-            boolean hasUnread = cfg.showChangelogNotification && currentVersion != null
-                    && !currentVersion.equals(cfg.lastReadChangelogVersion)
-                    && !cfg.lastReadChangelogVersion.isEmpty();
-            if (hasUnread && updateTooltip != null) {
-                Minecraft mc = Minecraft.getInstance();
-                updateTooltip.render(graphics, mc.font, mouseX, mouseY,
-                        mc.getWindow().getGuiScaledWidth(),
-                        mc.getWindow().getGuiScaledHeight());
+            boolean hasUnread = cfg.showChangelogNotification
+                    && ChangelogCache.isChangelogUnread(ChangelogCache.getProjectId());
+            Minecraft mc = Minecraft.getInstance();
+            int screenW = mc.getWindow().getGuiScaledWidth();
+            int screenH = mc.getWindow().getGuiScaledHeight();
+            if (textureActive) {
+                if (hasUnread) {
+                    updateTooltip.render(graphics, mc.font, mouseX, mouseY, screenW, screenH);
+                } else {
+                    changelogTooltip.render(graphics, mc.font, mouseX, mouseY, screenW, screenH);
+                }
+            } else if (hasUnread) {
+                updateTooltip.render(graphics, mc.font, mouseX, mouseY, screenW, screenH);
             }
         }
 
@@ -116,6 +126,24 @@ public class ChangelogButton extends DraggableTitleScreenWidget {
     }
 
     private void renderButton(GuiGraphics graphics, int x, int y) {
+        String tex = CthuLibConfig.getInstance().changelogButtonTexture;
+        if (tex != null && !tex.isEmpty()) {
+            this.textureStr = tex;
+        }
+        this.textureActive = false;
+        if (!textureStr.isEmpty()) {
+            try {
+                ResourceLocation loc = ResourceLocation.parse(textureStr);
+                RenderSystem.enableBlend();
+                RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
+                graphics.blit(loc, x, y, 0, 0, this.width, this.height, this.width, this.height);
+                RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
+                this.textureActive = true;
+                return;
+            } catch (Exception ignored) {
+                // Fall through to procedural render if texture is invalid
+            }
+        }
         int bgColor = 0xCC000000 + (int)(hoverAnimation * 0x33) * 0x010101;
         graphics.fill(x, y, x + this.width, y + this.height, bgColor);
         
@@ -151,8 +179,7 @@ public class ChangelogButton extends DraggableTitleScreenWidget {
             return;
         }
         
-        String currentVersion = ChangelogCache.getCurrentVersion();
-        boolean hasUnread = currentVersion != null && !currentVersion.equals(config.lastReadChangelogVersion) && !config.lastReadChangelogVersion.isEmpty();
+        boolean hasUnread = ChangelogCache.isChangelogUnread(ChangelogCache.getProjectId());
         
         if (!hasUnread) {
             return;
@@ -187,10 +214,12 @@ public class ChangelogButton extends DraggableTitleScreenWidget {
     public boolean mouseReleased(double mouseX, double mouseY, int button) {
         if (isDragging()) {
             CthuLibConfig config = CthuLibConfig.getInstance();
+            int scaledW = (int)(config.changelogButtonWidth * config.changelogButtonScale);
+            int scaledH = (int)(config.changelogButtonHeight * config.changelogButtonScale);
             UIElementPositionManager.endDragAdvanced(
                 UIElementPositionManager.ElementType.CHANGELOG_BUTTON,
                 "Changelog Button",
-                baseWidth, baseHeight,
+                scaledW, scaledH,
                 config.changelogButtonScaleWithScreen,
                 config.changelogButtonMinScale,
                 config.changelogButtonMaxScale,

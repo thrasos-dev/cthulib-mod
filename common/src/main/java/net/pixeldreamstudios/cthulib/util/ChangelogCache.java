@@ -1,5 +1,6 @@
 package net.pixeldreamstudios.cthulib.util;
 
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.minecraft.client.Minecraft;
@@ -7,17 +8,24 @@ import net.minecraft.client.Minecraft;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ChangelogCache {
     private static final File CACHE_DIR = new File(Minecraft.getInstance().gameDirectory, "cthulib_cache/changelogs");
     private static final File PROMO_CACHE_FILE = new File(Minecraft.getInstance().gameDirectory, "cthulib_cache/promo_card.json");
-    private static final Map<String, CachedChangelog> cache = new HashMap<>();
+    private static final File READ_CACHE_FILE = new File(Minecraft.getInstance().gameDirectory, "cthulib_cache/read_changelog.json");
+    private static final Map<String, CachedChangelog> cache = new ConcurrentHashMap<>();
     private static String cachedPromoCardUrl = null;
+    private static String lastReadHash = null;
+    private static boolean readHashLoaded = false;
+    private static String cachedVersion = null;
+    private static String cachedProjectId = null;
+    private static boolean bccLoaded = false;
     
     static {
         CACHE_DIR.mkdirs();
+        new File(Minecraft.getInstance().gameDirectory, "cthulib_cache").mkdirs();
     }
 
     public static class CachedChangelog {
@@ -32,48 +40,38 @@ public class ChangelogCache {
         }
     }
 
-    public static String getCurrentVersion() {
+    private static void loadBccJson() {
+        if (bccLoaded) return;
+        bccLoaded = true;
         try {
             File bccFile = new File(Minecraft.getInstance().gameDirectory, "config/bcc.json");
-            if (!bccFile.exists()) {
-                return null;
-            }
-
+            if (!bccFile.exists()) return;
             try (FileReader reader = new FileReader(bccFile)) {
                 JsonObject json = JsonParser.parseReader(reader).getAsJsonObject();
                 if (json.has("modpackVersion")) {
-                    return json.get("modpackVersion").getAsString();
+                    cachedVersion = json.get("modpackVersion").getAsString();
                 } else if (json.has("ignoreUpdatesAbove")) {
-                    return json.get("ignoreUpdatesAbove").getAsString();
+                    cachedVersion = json.get("ignoreUpdatesAbove").getAsString();
+                }
+                if (json.has("projectID") && json.get("projectID").isJsonPrimitive()) {
+                    cachedProjectId = json.get("projectID").getAsJsonPrimitive().isString()
+                        ? json.get("projectID").getAsString()
+                        : String.valueOf(json.get("projectID").getAsLong());
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return null;
+    }
+
+    public static String getCurrentVersion() {
+        loadBccJson();
+        return cachedVersion;
     }
 
     public static String getProjectId() {
-        try {
-            File bccFile = new File(Minecraft.getInstance().gameDirectory, "config/bcc.json");
-            if (!bccFile.exists()) {
-                return null;
-            }
-
-            try (FileReader reader = new FileReader(bccFile)) {
-                JsonObject json = JsonParser.parseReader(reader).getAsJsonObject();
-                if (json.has("projectID")) {
-                    if (json.get("projectID").isJsonPrimitive()) {
-                        return json.get("projectID").getAsJsonPrimitive().isString() 
-                            ? json.get("projectID").getAsString()
-                            : String.valueOf(json.get("projectID").getAsLong());
-                    }
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
+        loadBccJson();
+        return cachedProjectId;
     }
 
     public static CachedChangelog getCachedChangelog(String projectId) {
@@ -113,7 +111,7 @@ public class ChangelogCache {
             json.addProperty("timestamp", cached.timestamp);
 
             try (FileWriter writer = new FileWriter(cacheFile)) {
-                writer.write(json.toString());
+                writer.write(new GsonBuilder().setPrettyPrinting().create().toJson(json));
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -199,5 +197,58 @@ public class ChangelogCache {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private static String computeContentHash(String content) {
+        return Integer.toHexString(content.hashCode()) + "_" + content.length();
+    }
+
+    private static String getLastReadHash() {
+        if (!readHashLoaded) {
+            readHashLoaded = true;
+            if (READ_CACHE_FILE.exists()) {
+                try (FileReader reader = new FileReader(READ_CACHE_FILE)) {
+                    JsonObject json = JsonParser.parseReader(reader).getAsJsonObject();
+                    if (json.has("hash")) {
+                        lastReadHash = json.get("hash").getAsString();
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return lastReadHash;
+    }
+
+    public static void markChangelogAsRead(String projectId) {
+        if (projectId == null) return;
+        CachedChangelog cached = getCachedChangelog(projectId);
+        if (cached == null || cached.changelog == null || cached.changelog.isEmpty()) return;
+
+        String hash = computeContentHash(cached.changelog);
+        lastReadHash = hash;
+        readHashLoaded = true;
+
+        try {
+            READ_CACHE_FILE.getParentFile().mkdirs();
+            JsonObject json = new JsonObject();
+            json.addProperty("hash", hash);
+            json.addProperty("timestamp", System.currentTimeMillis());
+            try (FileWriter writer = new FileWriter(READ_CACHE_FILE)) {
+                writer.write(json.toString());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static boolean isChangelogUnread(String projectId) {
+        if (projectId == null) return false;
+        CachedChangelog cached = getCachedChangelog(projectId);
+        if (cached == null || cached.changelog == null || cached.changelog.isEmpty()) return false;
+
+        String cachedHash = computeContentHash(cached.changelog);
+        String readHash = getLastReadHash();
+        return !cachedHash.equals(readHash);
     }
 }

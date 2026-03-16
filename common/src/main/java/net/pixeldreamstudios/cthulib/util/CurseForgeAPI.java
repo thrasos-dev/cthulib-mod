@@ -58,6 +58,7 @@ public class CurseForgeAPI {
                     }
                     
                     List<String> supportedVersions = new ArrayList<>();
+                    List<String> loaders = new ArrayList<>();
                     if (mod.has("latestFilesIndexes")) {
                         JsonArray filesIndexes = mod.getAsJsonArray("latestFilesIndexes");
                         for (JsonElement fileElem : filesIndexes) {
@@ -68,14 +69,6 @@ public class CurseForgeAPI {
                                     supportedVersions.add(version);
                                 }
                             }
-                        }
-                    }
-                    
-                    List<String> loaders = new ArrayList<>();
-                    if (mod.has("latestFilesIndexes")) {
-                        JsonArray filesIndexes = mod.getAsJsonArray("latestFilesIndexes");
-                        for (JsonElement fileElem : filesIndexes) {
-                            JsonObject file = fileElem.getAsJsonObject();
                             if (file.has("modLoader")) {
                                 int loaderType = file.get("modLoader").getAsInt();
                                 String loaderName = getLoaderName(loaderType);

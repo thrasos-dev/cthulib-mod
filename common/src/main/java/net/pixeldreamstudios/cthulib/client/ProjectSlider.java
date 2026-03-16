@@ -27,6 +27,7 @@ public class ProjectSlider extends DraggableTitleScreenWidget {
     private float fadeIn = 0.0f;
     private float leftArrowHover = 0.0f;
     private float rightArrowHover = 0.0f;
+    private float arrowPulseTimer = 0.0f;
     private float slideTransition = 0.0f;
     private int slideDirection = 0;
     
@@ -76,8 +77,13 @@ public class ProjectSlider extends DraggableTitleScreenWidget {
         this.cardPadding = (int)(BASE_CARD_PADDING * scale);
         this.arrowSize = (int)(BASE_ARROW_SIZE * scale);
         
-        this.allProjects = ProjectData.getMockProjects();
-        this.filteredProjects = new ArrayList<>(allProjects);
+        this.allProjects = ProjectData.getCachedProjects();
+        try {
+            this.currentFilter = ProjectType.valueOf(CthuLibConfig.getInstance().sliderDefaultFilter.toUpperCase());
+        } catch (Exception ignored) {
+            this.currentFilter = ProjectType.ALL;
+        }
+        applyFilter();
         this.containerSlideIn = 0.0f;
         this.fadeIn = 0.0f;
         updatePositions();
@@ -90,7 +96,6 @@ public class ProjectSlider extends DraggableTitleScreenWidget {
         int screenHeight = mc.getWindow().getGuiScaledHeight();
 
         if (!isDragging()) {
-            // Recalculate responsive scale from current config
             float responsiveScale = cfg.sliderScale;
             if (cfg.sliderScaleWithScreen) {
                 float screenScaleFactor = Math.min(screenWidth / 1920.0f, screenHeight / 1080.0f);
@@ -126,14 +131,15 @@ public class ProjectSlider extends DraggableTitleScreenWidget {
         int centerX = curX + this.width / 2;
 
         headerY = curY;
+        int filterButtonBaseY = curY + headerHeight + (int)(5 * scale);
         filterButtonX = centerX - filterButtonWidth / 2 + cfg.sliderFilterOffsetX;
-        filterButtonY = curY + headerHeight + (int)(5 * scale) + cfg.sliderFilterOffsetY;
+        filterButtonY = filterButtonBaseY + cfg.sliderFilterOffsetY;
         cardX = centerX - cardWidth / 2;
 
         if (!cfg.sliderShowFilterButton) {
             cardY = curY + headerHeight + (int)(5 * scale);
         } else {
-            cardY = filterButtonY + filterButtonHeight + (int)(10 * scale);
+            cardY = filterButtonBaseY + filterButtonHeight + (int)(10 * scale);
         }
         leftArrowX = cardX - arrowSize - (int)(15 * scale);
         leftArrowY = cardY + (cardHeight - arrowSize) / 2;
@@ -273,7 +279,7 @@ public class ProjectSlider extends DraggableTitleScreenWidget {
             ProjectData incomingProject = filteredProjects.get(incomingIndex);
             
             int outgoingX = cardX - (int)(slideDirection * progress * slideDist);
-            float outgoingFade = 1.0f - (progress * 0.7f); // Fade from 100% to 30%
+            float outgoingFade = 1.0f - (progress * 0.7f);
             int outgoingAlpha = (int)(alpha * outgoingFade);
             if (outgoingAlpha > 5) {
                 renderCardFully(graphics, outgoingX, cardY, outgoingAlpha, outgoingProject, false);
@@ -405,7 +411,7 @@ public class ProjectSlider extends DraggableTitleScreenWidget {
         int cornerLength = (int)(12 * scale);
         int cornerThickness = Math.max(1, (int)(2 * scale));
         int cornerAlpha = (int)(transitionAlpha * 0.7f);
-        int cornerColor = (cornerAlpha << 24) | 0x4AD9FF; // Cyan accent
+        int cornerColor = (cornerAlpha << 24) | 0x4AD9FF;
         
         graphics.fill(renderX, renderY, renderX + cornerLength, renderY + cornerThickness, cornerColor);
         graphics.fill(renderX, renderY, renderX + cornerThickness, renderY + cornerLength, cornerColor);
@@ -491,8 +497,8 @@ public class ProjectSlider extends DraggableTitleScreenWidget {
         pose.scale(scale, scale, 1.0f);
         graphics.drawString(font, loaders, (int)(textX / scale), (int)(textY / scale), loaderColor, false);
         pose.popPose();
-        
-        String author = "by " + project.getAuthors().get(0);
+
+        String author = project.getAuthors().isEmpty() ? "by Unknown" : "by " + project.getAuthors().get(0);
         float authorScale = Math.max(0.3f, scale * 0.9f);
         int authorWidth = (int)(font.width(author) * authorScale);
         int authorX = renderX + cardWidth - authorWidth - cardPadding;
@@ -502,6 +508,21 @@ public class ProjectSlider extends DraggableTitleScreenWidget {
         pose.scale(authorScale, authorScale, 1.0f);
         graphics.drawString(font, author, (int)(authorX / authorScale), (int)(authorY / authorScale), authorColor, false);
         pose.popPose();
+
+        List<String> unmaintainedList = parseCommaSeparated(CthuLibConfig.getInstance().sliderUnmaintainedProjects);
+        if (!unmaintainedList.isEmpty() && unmaintainedList.stream().anyMatch(u ->
+                u.equalsIgnoreCase(project.getName()) || u.equalsIgnoreCase(project.getProjectId()))) {
+            String badgeText = "UNMAINTAINED";
+            int badgeW = (int)(font.width(badgeText) * scale) + (int)(6 * scale);
+            int badgeH = (int)(font.lineHeight * scale) + (int)(4 * scale);
+            int badgeX = renderX + cardWidth - badgeW - (int)(3 * scale);
+            int badgeY = renderY + (int)(3 * scale);
+            graphics.fill(badgeX, badgeY, badgeX + badgeW, badgeY + badgeH, ((int)(transitionAlpha * 0.85f) << 24) | 0x882222);
+            pose.pushPose();
+            pose.scale(scale, scale, 1.0f);
+            graphics.drawString(font, badgeText, (int)((badgeX + 3 * scale) / scale), (int)((badgeY + 2 * scale) / scale), (transitionAlpha << 24) | 0xFF7777, false);
+            pose.popPose();
+        }
 
         if (hovered && cardHoverAnimation > 0.05f) {
             int hoverAlpha = (int)(cardHoverAnimation * transitionAlpha * 0.18f);
@@ -516,17 +537,36 @@ public class ProjectSlider extends DraggableTitleScreenWidget {
         
         leftArrowHover = lerp(0.2f, leftArrowHover, leftHovered ? 1.0f : 0.0f);
         rightArrowHover = lerp(0.2f, rightArrowHover, rightHovered ? 1.0f : 0.0f);
+        arrowPulseTimer += 0.04f;
+        float idlePulse = (float)(Math.sin(arrowPulseTimer) * 0.5 + 0.5);
         
-        renderArrow(graphics, leftArrowX, leftArrowY, arrowSize, alpha, leftArrowHover, true);
-        renderArrow(graphics, rightArrowX, rightArrowY, arrowSize, alpha, rightArrowHover, false);
+        renderArrow(graphics, leftArrowX, leftArrowY, arrowSize, alpha, leftArrowHover, true, idlePulse);
+        renderArrow(graphics, rightArrowX, rightArrowY, arrowSize, alpha, rightArrowHover, false, idlePulse);
     }
     
-    private void renderArrow(GuiGraphics graphics, int x, int y, int size, int alpha, float hover, boolean pointLeft) {
+    private void renderArrow(GuiGraphics graphics, int x, int y, int size, int alpha, float hover, boolean pointLeft, float idlePulse) {
+        CthuLibConfig arrowCfg = CthuLibConfig.getInstance();
+        int idleColorRgb = parseHexColor(arrowCfg.sliderArrowIdleColor, 0x4ADBFF);
+        int hoverColorRgb = parseHexColor(arrowCfg.sliderArrowHoverColor, 0xFFAA33);
+        {
+            int idleRadius = 3 + (int)(idlePulse * 3);
+            for (int i = idleRadius; i > 0; i--) {
+                float falloff = (float)(idleRadius - i + 1) / (idleRadius + 1);
+                int gAlpha = (int)(alpha * 0.14f * falloff * (0.4f + idlePulse * 0.6f) * (1.0f - hover * 0.9f));
+                if (gAlpha < 2) continue;
+                int gColor = (gAlpha << 24) | idleColorRgb;
+                graphics.fill(x - i, y - i, x + size + i, y - i + 1, gColor);
+                graphics.fill(x - i, y + size + i - 1, x + size + i, y + size + i, gColor);
+                graphics.fill(x - i, y - i, x - i + 1, y + size + i, gColor);
+                graphics.fill(x + size + i - 1, y - i, x + size + i, y + size + i, gColor);
+            }
+        }
+
         if (hover > 0.01f) {
             int glowRadius = (int)(6 * hover);
             for (int i = 0; i < glowRadius; i++) {
                 int glowAlpha = (int)(alpha * hover * 0.2f * (1.0f - (float)i / glowRadius));
-                int glowColor = (glowAlpha << 24) | 0xFFAA33;
+                int glowColor = (glowAlpha << 24) | hoverColorRgb;
                 graphics.fill(x - i, y - i, x + size + i, y - i + 1, glowColor);
                 graphics.fill(x - i, y + size + i - 1, x + size + i, y + size + i, glowColor);
                 graphics.fill(x - i, y - i, x - i + 1, y + size + i, glowColor);
@@ -534,9 +574,9 @@ public class ProjectSlider extends DraggableTitleScreenWidget {
             }
         }
         
-        int bgAlpha = (int)(alpha * (0.75f + hover * 0.15f));
-        int topBrightness = 0x22 + (int)(hover * 0x15);
-        int bottomBrightness = 0x15 + (int)(hover * 0x0A);
+        int bgAlpha = (int)(alpha * (0.65f + idlePulse * 0.08f + hover * 0.2f));
+        int topBrightness = 0x36 + (int)(idlePulse * 0x08) + (int)(hover * 0x15);
+        int bottomBrightness = 0x28 + (int)(idlePulse * 0x06) + (int)(hover * 0x0A);
         int gradientSteps = 6;
         int stepHeight = size / gradientSteps;
         for (int i = 0; i < gradientSteps; i++) {
@@ -550,8 +590,8 @@ public class ProjectSlider extends DraggableTitleScreenWidget {
         
         if (hover > 0.01f) {
             int glowAlpha = (int)(alpha * hover * 0.6f);
-            int accentColor1 = 0xFFDD66;
-            int accentColor2 = 0xFF8833;
+            int accentColor1 = hoverColorRgb;
+            int accentColor2 = hoverColorRgb;
             int borderWidth = Math.max(1, (int)(2 * hover));
             
             for (int i = 0; i < borderWidth; i++) {
@@ -575,14 +615,17 @@ public class ProjectSlider extends DraggableTitleScreenWidget {
             }
         }
         
-        int borderAlpha = (int)(alpha * 0.6f * (1.0f - hover * 0.5f));
-        int borderColor = (borderAlpha << 24) | 0x999999;
-        graphics.fill(x, y, x + size, y + 1, borderColor);
-        graphics.fill(x, y + size - 1, x + size, y + size, borderColor);
-        graphics.fill(x, y, x + 1, y + size, borderColor);
-        graphics.fill(x + size - 1, y, x + size, y + size, borderColor);
+        float idleBorderStrength = 0.50f + idlePulse * 0.30f;
+        int idleBorderAlpha = (int)(alpha * idleBorderStrength * (1.0f - hover * 0.85f));
+        if (idleBorderAlpha > 3) {
+            int cyanBorder = (idleBorderAlpha << 24) | idleColorRgb;
+            graphics.fill(x, y, x + size, y + 1, cyanBorder);
+            graphics.fill(x, y + size - 1, x + size, y + size, cyanBorder);
+            graphics.fill(x, y, x + 1, y + size, cyanBorder);
+            graphics.fill(x + size - 1, y, x + size, y + size, cyanBorder);
+        }
         
-        int arrowAlpha = (int)(alpha * (0.9f + hover * 0.1f));
+        int arrowAlpha = (int)(alpha * (0.80f + idlePulse * 0.15f + hover * 0.05f));
         int arrowPadding = size / 4;
         int centerY = y + size / 2;
         int arrowHeight = size / 2 - arrowPadding;
@@ -816,15 +859,38 @@ public class ProjectSlider extends DraggableTitleScreenWidget {
         applyFilter();
     }
 
+    private List<String> parseCommaSeparated(String value) {
+        List<String> result = new ArrayList<>();
+        if (value == null || value.isEmpty()) return result;
+        for (String s : value.split(",")) {
+            String t = s.trim();
+            if (!t.isEmpty()) result.add(t);
+        }
+        return result;
+    }
+
+    private int parseHexColor(String hex, int fallback) {
+        try {
+            return (int) Long.parseLong(hex.replace("#", "").trim(), 16);
+        } catch (Exception e) {
+            return fallback;
+        }
+    }
+
     private void applyFilter() {
-        if (currentFilter == ProjectType.ALL) {
-            filteredProjects = new ArrayList<>(allProjects);
+        CthuLibConfig cfg = CthuLibConfig.getInstance();
+        List<String> blacklist = parseCommaSeparated(cfg.sliderBlacklistedProjects);
+        List<ProjectData> base = currentFilter == ProjectType.ALL
+                ? new ArrayList<>(allProjects)
+                : allProjects.stream().filter(p -> p.getType() == currentFilter).collect(Collectors.toList());
+        if (blacklist.isEmpty()) {
+            filteredProjects = base;
         } else {
-            filteredProjects = allProjects.stream()
-                    .filter(p -> p.getType() == currentFilter)
+            filteredProjects = base.stream().filter(p ->
+                    blacklist.stream().noneMatch(b ->
+                            b.equalsIgnoreCase(p.getName()) || b.equalsIgnoreCase(p.getProjectId())))
                     .collect(Collectors.toList());
         }
-        
         if (currentIndex >= filteredProjects.size() && !filteredProjects.isEmpty()) {
             currentIndex = 0;
         }

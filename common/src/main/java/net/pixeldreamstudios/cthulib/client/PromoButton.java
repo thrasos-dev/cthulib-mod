@@ -158,10 +158,12 @@ public class PromoButton extends DraggableTitleScreenWidget {
     public boolean mouseReleased(double mouseX, double mouseY, int button) {
         if (isDragging()) {
             CthuLibConfig config = CthuLibConfig.getInstance();
+            int scaledW = (int)(config.promoButtonWidth * config.promoButtonScale);
+            int scaledH = (int)(config.promoButtonHeight * config.promoButtonScale);
             UIElementPositionManager.endDragAdvanced(
                 UIElementPositionManager.ElementType.PROMO_BUTTON,
                 "Promo Button",
-                baseWidth, baseHeight,
+                scaledW, scaledH,
                 config.promoButtonScaleWithScreen,
                 config.promoButtonMinScale,
                 config.promoButtonMaxScale,

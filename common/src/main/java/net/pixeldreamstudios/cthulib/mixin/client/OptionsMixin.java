@@ -1,6 +1,6 @@
 package net.pixeldreamstudios.cthulib.mixin.client;
 
-import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
 import net.pixeldreamstudios.cthulib.config.CthuLibConfig;
 import org.spongepowered.asm.mixin.Mixin;
@@ -26,8 +26,8 @@ public class OptionsMixin {
 
     private void modifyOptionsFile() {
         try {
-            Path optionsPath = FabricLoader.getInstance()
-                    .getGameDir().resolve("options.txt");
+            Path optionsPath = Minecraft.getInstance()
+                    .gameDirectory.toPath().resolve("options.txt");
 
             if (!Files.exists(optionsPath)) {
                 return;

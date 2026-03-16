@@ -67,7 +67,7 @@ public class ProjectData {
         return projectUrl;
     }
 
-    public static List<ProjectData> getMockProjects() {
+    public static List<ProjectData> getCachedProjects() {
         if (cachedProjects != null) {
             return cachedProjects;
         }

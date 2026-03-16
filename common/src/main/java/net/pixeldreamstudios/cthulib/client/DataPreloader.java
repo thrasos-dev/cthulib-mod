@@ -32,7 +32,7 @@ public class DataPreloader {
                     for (ProjectData project : projects) {
                         String iconUrl = project.getIconUrl();
                         if (iconUrl != null && !iconUrl.isEmpty()) {
-                            preloadLogo(iconUrl);
+                            preloadImageToCache(iconUrl, "logos");
                         }
                     }
                 }
@@ -47,7 +47,7 @@ public class DataPreloader {
                 
                 String promoCardUrl = ChangelogCache.getPromoCardUrl();
                 if (promoCardUrl != null && !promoCardUrl.isEmpty()) {
-                    preloadPromoImage(promoCardUrl);
+                    preloadImageToCache(promoCardUrl, "promo_buttons");
                 }
                 
                 System.out.println("[CthuLib] Data preloading complete");
@@ -57,64 +57,25 @@ public class DataPreloader {
         });
     }
 
-    private static void preloadLogo(String iconUrl) {
+    private static void preloadImageToCache(String imageUrl, String subfolder) {
         try {
             Minecraft minecraft = Minecraft.getInstance();
-            File cacheDir = new File(minecraft.gameDirectory, "cthulib_cache/logos");
-            
+            File cacheDir = new File(minecraft.gameDirectory, "cthulib_cache/" + subfolder);
             if (!cacheDir.exists()) {
                 cacheDir.mkdirs();
             }
-            
-            String fileName = iconUrl.hashCode() + ".png";
-            File cacheFile = new File(cacheDir, fileName);
-            
-            if (!cacheFile.exists()) {
-                URI uri = new URI(iconUrl);
-                HttpURLConnection connection = (HttpURLConnection) uri.toURL().openConnection();
-                connection.setRequestMethod("GET");
-                connection.setConnectTimeout(5000);
-                connection.setReadTimeout(5000);
-                
-                if (connection.getResponseCode() == 200) {
-                    InputStream inputStream = connection.getInputStream();
-                    BufferedImage image = ImageIO.read(inputStream);
-                    inputStream.close();
-                    
-                    if (image != null) {
-                        ImageIO.write(image, "png", cacheFile);
-                    }
-                }
-                connection.disconnect();
-            }
-        } catch (Exception e) {
-        }
-    }
-    
-    private static void preloadPromoImage(String imageUrl) {
-        try {
-            Minecraft minecraft = Minecraft.getInstance();
-            File cacheDir = new File(minecraft.gameDirectory, "cthulib_cache/promo_buttons");
-            
-            if (!cacheDir.exists()) {
-                cacheDir.mkdirs();
-            }
-            
             String fileName = imageUrl.hashCode() + ".png";
             File cacheFile = new File(cacheDir, fileName);
-            
             if (!cacheFile.exists()) {
                 URI uri = new URI(imageUrl);
                 HttpURLConnection connection = (HttpURLConnection) uri.toURL().openConnection();
                 connection.setRequestMethod("GET");
                 connection.setConnectTimeout(5000);
                 connection.setReadTimeout(5000);
-                
                 if (connection.getResponseCode() == 200) {
                     InputStream inputStream = connection.getInputStream();
                     BufferedImage image = ImageIO.read(inputStream);
                     inputStream.close();
-                    
                     if (image != null) {
                         ImageIO.write(image, "png", cacheFile);
                     }

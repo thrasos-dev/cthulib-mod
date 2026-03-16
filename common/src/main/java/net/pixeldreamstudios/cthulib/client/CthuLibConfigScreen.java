@@ -86,6 +86,30 @@ public class CthuLibConfigScreen extends Screen {
         addTextField("Discord Button Texture", "e.g., cthulib:textures/gui/button_discord.png", config.discordLogo, val -> config.discordLogo = val, leftX, yPos);
 
         yPos += ENTRY_HEIGHT + 10;
+        addSection("Modlist Button", yPos);
+        addResetButton("Reset Modlist", yPos, () -> {
+            config.resetModlistButton();
+            config.save();
+            this.minecraft.setScreen(new CthuLibConfigScreen(parent));
+        });
+        yPos += ENTRY_HEIGHT;
+        addIntSlider("Title Screen X", config.buttonXtitleScreen, -2000, 2000, val -> config.buttonXtitleScreen = val, leftX, yPos);
+        yPos += ENTRY_HEIGHT;
+        addIntSlider("Title Screen Y", config.buttonYtitleScreen, -2000, 2000, val -> config.buttonYtitleScreen = val, leftX, yPos);
+        yPos += ENTRY_HEIGHT;
+        addIntSlider("Width", config.modlistButtonWidth, 10, 100, val -> config.modlistButtonWidth = val, leftX, yPos);
+        yPos += ENTRY_HEIGHT;
+        addIntSlider("Height", config.modlistButtonHeight, 10, 100, val -> config.modlistButtonHeight = val, leftX, yPos);
+        yPos += ENTRY_HEIGHT;
+        addFloatSlider("Scale", config.modlistButtonScale, 0.3f, 3.0f, val -> config.modlistButtonScale = val, leftX, yPos);
+        yPos += ENTRY_HEIGHT;
+        addCheckbox("Scale with Screen", config.modlistButtonScaleWithScreen, val -> config.modlistButtonScaleWithScreen = val, leftX, yPos);
+        yPos += ENTRY_HEIGHT;
+        addFloatSlider("Min Scale", config.modlistButtonMinScale, 0.1f, 2.0f, val -> config.modlistButtonMinScale = val, leftX, yPos);
+        yPos += ENTRY_HEIGHT;
+        addFloatSlider("Max Scale", config.modlistButtonMaxScale, 0.1f, 3.0f, val -> config.modlistButtonMaxScale = val, leftX, yPos);
+
+        yPos += ENTRY_HEIGHT + 10;
         addSection("Promo", yPos);
         addCheckbox("Show Promo Button", config.showPromoButton, val -> config.showPromoButton = val, leftX, yPos);
         addResetButton("Reset Promo", yPos, () -> {
@@ -108,6 +132,8 @@ public class CthuLibConfigScreen extends Screen {
         yPos += ENTRY_HEIGHT;
         addIntSlider("Promo Height", config.promoButtonHeight, 10, 200, val -> config.promoButtonHeight = val, leftX, yPos);
         yPos += ENTRY_HEIGHT;
+        addFloatSlider("Scale", config.promoButtonScale, 0.1f, 3.0f, val -> config.promoButtonScale = val, leftX, yPos);
+        yPos += ENTRY_HEIGHT;
         addCheckbox("Scale with Screen", config.promoButtonScaleWithScreen, val -> config.promoButtonScaleWithScreen = val, leftX, yPos);
         yPos += ENTRY_HEIGHT;
         addFloatSlider("Min Scale", config.promoButtonMinScale, 0.1f, 2.0f, val -> config.promoButtonMinScale = val, leftX, yPos);
@@ -121,8 +147,6 @@ public class CthuLibConfigScreen extends Screen {
         addCheckbox("Start From Left X", config.promoButtonStartFromLeftX, val -> config.promoButtonStartFromLeftX = val, leftX, yPos);
         yPos += ENTRY_HEIGHT;
         addCheckbox("Start From Right X", config.promoButtonStartFromRightX, val -> config.promoButtonStartFromRightX = val, leftX, yPos);
-        yPos += ENTRY_HEIGHT;
-        addFloatSlider("Scale", config.promoButtonScale, 0.1f, 3.0f, val -> config.promoButtonScale = val, leftX, yPos);
 
         yPos += ENTRY_HEIGHT + 10;
         addSection("Slider", yPos);
@@ -149,8 +173,6 @@ public class CthuLibConfigScreen extends Screen {
         yPos += ENTRY_HEIGHT;
         addFloatSlider("Auto Slide Delay (s)", config.sliderAutoSlideDelay, 1.0f, 20.0f, val -> config.sliderAutoSlideDelay = val, leftX, yPos);
         yPos += ENTRY_HEIGHT;
-        addCheckbox("Show Previews", config.sliderShowPreviews, val -> config.sliderShowPreviews = val, leftX, yPos);
-        yPos += ENTRY_HEIGHT;
         addCheckbox("Start From Center X", config.sliderStartFromCenterX, val -> config.sliderStartFromCenterX = val, leftX, yPos);
         yPos += ENTRY_HEIGHT;
         addCheckbox("Start From Center Y", config.sliderStartFromCenterY, val -> config.sliderStartFromCenterY = val, leftX, yPos);
@@ -165,9 +187,27 @@ public class CthuLibConfigScreen extends Screen {
         yPos += ENTRY_HEIGHT;
         addFloatSlider("Max Scale", config.sliderMaxScale, 1.0f, 3.0f, val -> config.sliderMaxScale = val, leftX, yPos);
         yPos += ENTRY_HEIGHT;
+        addCheckbox("Show Previews", config.sliderShowPreviews, val -> config.sliderShowPreviews = val, leftX, yPos);
+        yPos += ENTRY_HEIGHT;
         addFloatSlider("Preview Scale", config.sliderPreviewScale, 0.3f, 1.0f, val -> config.sliderPreviewScale = val, leftX, yPos);
         yPos += ENTRY_HEIGHT;
         addIntSlider("Preview Offset", config.sliderPreviewOffset, 0, 100, val -> config.sliderPreviewOffset = val, leftX, yPos);
+        yPos += ENTRY_HEIGHT;
+        addCheckbox("Show Filter Button", config.sliderShowFilterButton, val -> config.sliderShowFilterButton = val, leftX, yPos);
+        yPos += ENTRY_HEIGHT;
+        addIntSlider("Filter Btn Offset X", config.sliderFilterOffsetX, -200, 200, val -> config.sliderFilterOffsetX = val, leftX, yPos);
+        yPos += ENTRY_HEIGHT;
+        addIntSlider("Filter Btn Offset Y", config.sliderFilterOffsetY, -200, 200, val -> config.sliderFilterOffsetY = val, leftX, yPos);
+        yPos += ENTRY_HEIGHT;
+        addTextField("Default Filter", "ALL / MOD / MODPACK", config.sliderDefaultFilter, val -> config.sliderDefaultFilter = val.toUpperCase(), leftX, yPos);
+        yPos += ENTRY_HEIGHT;
+        addTextField("Arrow Idle Color (hex)", "e.g., 4ADBFF", config.sliderArrowIdleColor, val -> config.sliderArrowIdleColor = val, leftX, yPos);
+        yPos += ENTRY_HEIGHT;
+        addTextField("Arrow Hover Color (hex)", "e.g., FFAA33", config.sliderArrowHoverColor, val -> config.sliderArrowHoverColor = val, leftX, yPos);
+        yPos += ENTRY_HEIGHT;
+        addTextField("Blacklisted Projects", "Names or IDs, comma-separated", config.sliderBlacklistedProjects, val -> config.sliderBlacklistedProjects = val, leftX, yPos);
+        yPos += ENTRY_HEIGHT;
+        addTextField("Unmaintained Projects", "Names or IDs, comma-separated", config.sliderUnmaintainedProjects, val -> config.sliderUnmaintainedProjects = val, leftX, yPos);
 
         yPos += ENTRY_HEIGHT + 10;
         addSection("Changelog", yPos);
@@ -181,6 +221,14 @@ public class CthuLibConfigScreen extends Screen {
         addTextField("Changelog Button Texture", "e.g., cthulib:textures/gui/changelog.png", config.changelogButtonTexture, val -> config.changelogButtonTexture = val, leftX, yPos);
         yPos += ENTRY_HEIGHT;
         addIntSlider("Changelog X", config.changelogButtonX, -1000, 1000, val -> config.changelogButtonX = val, leftX, yPos);
+        yPos += ENTRY_HEIGHT;
+        addIntSlider("Changelog Y", config.changelogButtonY, -1000, 1000, val -> config.changelogButtonY = val, leftX, yPos);
+        yPos += ENTRY_HEIGHT;
+        addIntSlider("Changelog Width", config.changelogButtonWidth, 50, 300, val -> config.changelogButtonWidth = val, leftX, yPos);
+        yPos += ENTRY_HEIGHT;
+        addIntSlider("Changelog Height", config.changelogButtonHeight, 10, 100, val -> config.changelogButtonHeight = val, leftX, yPos);
+        yPos += ENTRY_HEIGHT;
+        addFloatSlider("Scale", config.changelogButtonScale, 0.1f, 3.0f, val -> config.changelogButtonScale = val, leftX, yPos);
         yPos += ENTRY_HEIGHT;
         addCheckbox("Scale with Screen", config.changelogButtonScaleWithScreen, val -> config.changelogButtonScaleWithScreen = val, leftX, yPos);
         yPos += ENTRY_HEIGHT;
@@ -196,12 +244,6 @@ public class CthuLibConfigScreen extends Screen {
         yPos += ENTRY_HEIGHT;
         addCheckbox("Start From Right X", config.changelogButtonStartFromRightX, val -> config.changelogButtonStartFromRightX = val, leftX, yPos);
         yPos += ENTRY_HEIGHT;
-        addIntSlider("Changelog Y", config.changelogButtonY, -1000, 1000, val -> config.changelogButtonY = val, leftX, yPos);
-        yPos += ENTRY_HEIGHT;
-        addIntSlider("Changelog Width", config.changelogButtonWidth, 50, 300, val -> config.changelogButtonWidth = val, leftX, yPos);
-        yPos += ENTRY_HEIGHT;
-        addIntSlider("Changelog Height", config.changelogButtonHeight, 10, 100, val -> config.changelogButtonHeight = val, leftX, yPos);
-        yPos += ENTRY_HEIGHT;
         addIntSlider("Panel Width", config.changelogPanelWidth, 300, 1200, val -> config.changelogPanelWidth = val, leftX, yPos);
         yPos += ENTRY_HEIGHT;
         addIntSlider("Panel Height", config.changelogPanelHeight, 200, 800, val -> config.changelogPanelHeight = val, leftX, yPos);
@@ -209,8 +251,6 @@ public class CthuLibConfigScreen extends Screen {
         addTextField("Panel Texture", "e.g., cthulib:textures/gui/panel.png", config.changelogPanelTexture, val -> config.changelogPanelTexture = val, leftX, yPos);
         yPos += ENTRY_HEIGHT;
         addCheckbox("Show Notification Badge", config.showChangelogNotification, val -> config.showChangelogNotification = val, leftX, yPos);
-        yPos += ENTRY_HEIGHT;
-        addFloatSlider("Scale", config.changelogButtonScale, 0.1f, 3.0f, val -> config.changelogButtonScale = val, leftX, yPos);
 
         yPos += ENTRY_HEIGHT + 10;
         addSection("Animations", yPos);

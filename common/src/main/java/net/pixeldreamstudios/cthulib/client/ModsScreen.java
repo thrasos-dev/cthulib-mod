@@ -42,16 +42,10 @@ public class ModsScreen extends Screen {
     private static final int LOGO_MAX_WITHOUT_NAME = 64;
     private static final int HEADER_HEIGHT = 78;
     private static final int MAX_TEXTURE_SIZE = 2048;
-    
-    // Static cache to prevent re-loading mod data on every screen open
     private static List<ModData> cachedMods = null;
     private static ModListWidget cachedModList = null;
     private static int lastScreenWidth = -1;
     private static int lastScreenHeight = -1;
-    
-    /**
-     * Call this to invalidate cache when mods change or config changes
-     */
     public static void invalidateCache() {
         cachedMods = null;
         cachedModList = null;
@@ -70,19 +64,14 @@ public class ModsScreen extends Screen {
 
         CthuLibConfig cfg = CthuLibConfig.get();
 
-        // Preload mod data only if not already cached
         if (!ModCollector.isDataReady()) {
             ModCollector.preloadModData();
         }
-
-        // Only recreate mod list on first init, otherwise just reuse
         boolean isFirstInit = (lastScreenWidth == -1 && lastScreenHeight == -1);
         
-        // Update tracked screen size
         lastScreenWidth = width;
         lastScreenHeight = height;
 
-        // Reuse cached mod data
         if (cachedMods == null) {
             cachedMods = ModCollector.getModsByConfiguredAuthors();
         }
@@ -103,7 +92,6 @@ public class ModsScreen extends Screen {
             loadBackgroundAsync();
         }
 
-        // Reuse cached mod list widget - create only once
         if (cachedModList == null || isFirstInit) {
             cachedModList = new ModListWidget(minecraft, width, height, listTop, height, 68);
             cachedModList.setMods(mods);
@@ -186,7 +174,7 @@ public class ModsScreen extends Screen {
                     discordLogoTex = dt;
                 }
 
-                addRenderableWidget(new BrightnessImageButton(x, y, 20, 20,
+                addRenderableWidget(new ModListButton(x, y, 20, 20,
                         loc,
                         b -> Util.getPlatform().openUri(link),
                         Component.literal(label)));

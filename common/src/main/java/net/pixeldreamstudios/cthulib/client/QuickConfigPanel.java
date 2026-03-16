@@ -5,7 +5,9 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Checkbox;
+import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
@@ -27,6 +29,7 @@ public class QuickConfigPanel {
     private int scrollOffset = 0;
     private int contentHeight = 0;
     private AbstractWidget draggingWidget = null;
+    private AbstractWidget focusedWidget = null;
     private final Runnable rebuildCallback;
 
     public QuickConfigPanel(String widgetType, int mouseX, int mouseY) {
@@ -70,6 +73,8 @@ public class QuickConfigPanel {
                 addIntSlider("Height", cfg.promoButtonHeight, 10, 200, val -> {
                     cfg.promoButtonHeight = val;
                 }, x, yPos);
+                yPos += entryHeight;
+                addFloatSlider("Scale", cfg.promoButtonScale, 0.1f, 3.0f, val -> cfg.promoButtonScale = val, x, yPos);
                 yPos += entryHeight;
                 addCheckbox("Scale with Screen", cfg.promoButtonScaleWithScreen, val -> cfg.promoButtonScaleWithScreen = val, x, yPos);
                 yPos += entryHeight;
@@ -125,6 +130,16 @@ public class QuickConfigPanel {
                 yPos += entryHeight;
                 addIntSlider("Filter Btn Offset Y", cfg.sliderFilterOffsetY, -200, 200, val -> cfg.sliderFilterOffsetY = val, x, yPos);
                 yPos += entryHeight;
+                addCycleButton("Default Filter", new String[]{"ALL", "MOD", "MODPACK"}, cfg.sliderDefaultFilter, val -> cfg.sliderDefaultFilter = val, x, yPos);
+                yPos += entryHeight;
+                addTextField("Arrow Idle Color", "hex, e.g. 4ADBFF", cfg.sliderArrowIdleColor, val -> cfg.sliderArrowIdleColor = val, x, yPos);
+                yPos += entryHeight;
+                addTextField("Arrow Hover Color", "hex, e.g. FFAA33", cfg.sliderArrowHoverColor, val -> cfg.sliderArrowHoverColor = val, x, yPos);
+                yPos += entryHeight;
+                addTextField("Blacklisted Projects", "names/IDs, comma-sep", cfg.sliderBlacklistedProjects, val -> cfg.sliderBlacklistedProjects = val, x, yPos);
+                yPos += entryHeight;
+                addTextField("Unmaintained Projects", "names/IDs, comma-sep", cfg.sliderUnmaintainedProjects, val -> cfg.sliderUnmaintainedProjects = val, x, yPos);
+                yPos += entryHeight;
                 addLabel("\u2500\u2500 Animations \u2500\u2500", x, yPos);
                 yPos += labelHeight;
                 addCheckbox("Animations Enabled", cfg.animationsEnabled, val -> cfg.animationsEnabled = val, x, yPos);
@@ -160,6 +175,8 @@ public class QuickConfigPanel {
                     cfg.changelogButtonHeight = val;
                 }, x, yPos);
                 yPos += entryHeight;
+                addFloatSlider("Scale", cfg.changelogButtonScale, 0.1f, 3.0f, val -> cfg.changelogButtonScale = val, x, yPos);
+                yPos += entryHeight;
                 addCheckbox("Scale with Screen", cfg.changelogButtonScaleWithScreen, val -> cfg.changelogButtonScaleWithScreen = val, x, yPos);
                 yPos += entryHeight;
                 addCheckbox("Start From Center X", cfg.changelogButtonStartFromCenterX, val -> cfg.changelogButtonStartFromCenterX = val, x, yPos);
@@ -179,6 +196,29 @@ public class QuickConfigPanel {
                 addCheckbox("Shine Effect", cfg.shineEffectEnabled, val -> cfg.shineEffectEnabled = val, x, yPos);
                 yPos += entryHeight;
                 addFloatSlider("Shine Speed", cfg.shineAnimationSpeed, 0.1f, 5.0f, val -> cfg.shineAnimationSpeed = val, x, yPos);
+                yPos += entryHeight;
+                break;
+
+            case "Modlist Button":
+                addIntSlider("X", cfg.buttonXtitleScreen, -2000, 2000, val -> cfg.buttonXtitleScreen = val, x, yPos);
+                yPos += entryHeight;
+                addIntSlider("Y", cfg.buttonYtitleScreen, -2000, 2000, val -> cfg.buttonYtitleScreen = val, x, yPos);
+                yPos += entryHeight;
+                addIntSlider("Width", cfg.modlistButtonWidth, 10, 100, val -> cfg.modlistButtonWidth = val, x, yPos);
+                yPos += entryHeight;
+                addIntSlider("Height", cfg.modlistButtonHeight, 10, 100, val -> cfg.modlistButtonHeight = val, x, yPos);
+                yPos += entryHeight;
+                addFloatSlider("Scale", cfg.modlistButtonScale, 0.3f, 3.0f, val -> cfg.modlistButtonScale = val, x, yPos);
+                yPos += entryHeight;
+                addCheckbox("Scale with Screen", cfg.modlistButtonScaleWithScreen, val -> cfg.modlistButtonScaleWithScreen = val, x, yPos);
+                yPos += entryHeight;
+                addLabel("── Animations ──", x, yPos);
+                yPos += labelHeight;
+                addCheckbox("Animations Enabled", cfg.animationsEnabled, val -> cfg.animationsEnabled = val, x, yPos);
+                yPos += entryHeight;
+                addFloatSlider("Hover Speed", cfg.hoverAnimationSpeed, 0.01f, 1.0f, val -> cfg.hoverAnimationSpeed = val, x, yPos);
+                yPos += entryHeight;
+                addFloatSlider("Press Speed", cfg.pressAnimationSpeed, 0.01f, 1.0f, val -> cfg.pressAnimationSpeed = val, x, yPos);
                 yPos += entryHeight;
                 break;
         }
@@ -258,6 +298,43 @@ public class QuickConfigPanel {
         widgetBaseY.add(y);
     }
 
+    private void addTextField(String label, String hint, String initial, Consumer<String> callback, int x, int y) {
+        EditBox box = new EditBox(Minecraft.getInstance().font, x, y, 240, 20, Component.literal(label));
+        box.setMaxLength(256);
+        box.setValue(initial == null ? "" : initial);
+        box.setHint(Component.literal(hint));
+        box.setResponder(val -> {
+            callback.accept(val);
+            CthuLibConfig.getInstance().save();
+        });
+        widgets.add(box);
+        widgetBaseY.add(y);
+    }
+
+    private void addCycleButton(String prefix, String[] options, String current, Consumer<String> callback, int x, int y) {
+        int startIdx = 0;
+        for (int i = 0; i < options.length; i++) {
+            if (options[i].equalsIgnoreCase(current)) { startIdx = i; break; }
+        }
+        final int[] idx = {startIdx};
+        Button btn = Button.builder(Component.literal(prefix + ": " + options[idx[0]]), b -> {
+            idx[0] = (idx[0] + 1) % options.length;
+            b.setMessage(Component.literal(prefix + ": " + options[idx[0]]));
+            callback.accept(options[idx[0]]);
+            CthuLibConfig.getInstance().save();
+        }).bounds(x, y, 240, 20).build();
+        widgets.add(btn);
+        widgetBaseY.add(y);
+    }
+
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        return focusedWidget != null && focusedWidget.keyPressed(keyCode, scanCode, modifiers);
+    }
+
+    public boolean charTyped(char codePoint, int modifiers) {
+        return focusedWidget != null && focusedWidget.charTyped(codePoint, modifiers);
+    }
+
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         if (!visible) return;
         
@@ -290,15 +367,26 @@ public class QuickConfigPanel {
         if (mouseX >= panelX && mouseX <= panelX + panelWidth &&
             mouseY >= panelY && mouseY <= panelY + panelHeight) {
 
+            if (focusedWidget != null) {
+                focusedWidget.setFocused(false);
+                focusedWidget = null;
+            }
+
             for (AbstractWidget widget : widgets) {
                 if (widget.mouseClicked(mouseX, mouseY, button)) {
                     draggingWidget = widget;
+                    focusedWidget = widget;
+                    widget.setFocused(true);
                     return true;
                 }
             }
             return true;
         }
 
+        if (focusedWidget != null) {
+            focusedWidget.setFocused(false);
+            focusedWidget = null;
+        }
         visible = false;
         draggingWidget = null;
         return false;

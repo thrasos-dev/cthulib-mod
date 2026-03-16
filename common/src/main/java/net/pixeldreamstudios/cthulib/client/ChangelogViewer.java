@@ -22,6 +22,8 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
@@ -304,13 +306,15 @@ public class ChangelogViewer extends Screen {
         
         panelWidth = (int)(baseWidth * easeProgress);
         panelHeight = (int)(baseHeight * easeProgress);
-        
-        if (config.changelogPanelX >= 0 && config.changelogPanelY >= 0) {
-            panelX = Math.max(0, Math.min(screenWidth - panelWidth, config.changelogPanelX));
-            panelY = Math.max(0, Math.min(screenHeight - panelHeight, config.changelogPanelY));
-        } else {
-            panelX = (screenWidth - panelWidth) / 2;
-            panelY = (screenHeight - panelHeight) / 2;
+
+        if (!isDraggingPanel) {
+            if (config.changelogPanelX >= 0 && config.changelogPanelY >= 0) {
+                panelX = Math.max(0, Math.min(screenWidth - panelWidth, config.changelogPanelX));
+                panelY = Math.max(0, Math.min(screenHeight - panelHeight, config.changelogPanelY));
+            } else {
+                panelX = (screenWidth - panelWidth) / 2;
+                panelY = (screenHeight - panelHeight) / 2;
+            }
         }
         
         int shadowLayers = 8;
@@ -377,6 +381,8 @@ public class ChangelogViewer extends Screen {
             return;
         }
         
+        imageClickAreas.clear();
+        
         for (MarkdownLine line : lines) {
             if (line.style == MarkdownStyle.CODE_BLOCK) {
                 inCodeBlock = !inCodeBlock;
@@ -386,7 +392,7 @@ public class ChangelogViewer extends Screen {
             if (line.style == MarkdownStyle.IMAGE) {
                 int imageHeight = getImageHeight(line);
                 if (y + imageHeight >= contentY && y < contentY + contentHeight) {
-                    y += renderImage(graphics, line, panelX + PADDING, panelWidth - PADDING * 2, y, textAlpha);
+                    y += renderImage(graphics, line, panelX + PADDING, panelWidth - PADDING * 2, y, textAlpha, mouseX, mouseY);
                 } else {
                     y += imageHeight;
                 }
@@ -559,7 +565,7 @@ public class ChangelogViewer extends Screen {
             ImageClickArea area = entry.getValue();
             if (area.linkUrl != null && mouseX >= area.x && mouseX <= area.x + area.width &&
                 mouseY >= area.y && mouseY <= area.y + area.height) {
-                Util.getPlatform().openUri(area.linkUrl);
+                Util.getPlatform().openUri(resolveLink(area.linkUrl));
                 return true;
             }
         }
@@ -596,9 +602,11 @@ public class ChangelogViewer extends Screen {
         if (isDraggingPanel && button == 0) {
             int screenWidth = this.minecraft.getWindow().getGuiScaledWidth();
             int screenHeight = this.minecraft.getWindow().getGuiScaledHeight();
-            
-            panelX = Math.max(0, Math.min(screenWidth - panelWidth, (int)(mouseX - dragOffsetX)));
-            panelY = Math.max(0, Math.min(screenHeight - panelHeight, (int)(mouseY - dragOffsetY)));
+            CthuLibConfig dragCfg = CthuLibConfig.getInstance();
+            int fullWidth = Math.min(dragCfg.changelogPanelWidth, screenWidth - 100);
+            int fullHeight = Math.min(dragCfg.changelogPanelHeight, screenHeight - 60);
+            panelX = Math.max(0, Math.min(screenWidth - fullWidth, (int)(mouseX - dragOffsetX)));
+            panelY = Math.max(0, Math.min(screenHeight - fullHeight, (int)(mouseY - dragOffsetY)));
             return true;
         }
         
@@ -622,14 +630,29 @@ public class ChangelogViewer extends Screen {
     private static float easeOutCubic(float t) {
         return 1.0f - (float)Math.pow(1.0f - t, 3.0);
     }
-    
-    private int renderImage(GuiGraphics graphics, MarkdownLine line, int x, int maxWidth, int y, int alpha) {
+
+    private static String resolveLink(String url) {
+        if (url == null) return null;
+        try {
+            int idx = url.indexOf("remoteUrl=");
+            if (idx >= 0) {
+                String raw = url.substring(idx + "remoteUrl=".length());
+                return URLDecoder.decode(URLDecoder.decode(raw, StandardCharsets.UTF_8), StandardCharsets.UTF_8);
+            }
+        } catch (Exception e) {
+            // fall through to return original
+        }
+        return url;
+    }
+
+    private int renderImage(GuiGraphics graphics, MarkdownLine line, int x, int maxWidth, int y, int alpha, int mouseX, int mouseY) {
         if (line.imageUrl == null) return LINE_HEIGHT;
         
         try {
             ResourceLocation texture = getOrLoadTexture(line.imageUrl);
             if (texture == null) {
-                graphics.drawString(this.font, "[Loading image...]", x, y, (alpha << 24) | 0x888888, false);
+                String loadingText = line.linkUrl != null ? "[Loading image... (clickable link)]": "[Loading image...]";
+                graphics.drawString(this.font, loadingText, x, y, (alpha << 24) | 0x888888, false);
                 return LINE_HEIGHT + IMAGE_SPACING;
             }
             
@@ -650,11 +673,18 @@ public class ChangelogViewer extends Screen {
             if (line.linkUrl != null) {
                 imageClickAreas.put(line.imageUrl, new ImageClickArea(x, y, imgWidth, imgHeight, line.linkUrl));
                 
-                int borderAlpha = alpha / 2;
-                graphics.fill(x, y, x + imgWidth, y + 1, (borderAlpha << 24) | 0xFFFFFF);
-                graphics.fill(x, y + imgHeight - 1, x + imgWidth, y + imgHeight, (borderAlpha << 24) | 0xFFFFFF);
-                graphics.fill(x, y, x + 1, y + imgHeight, (borderAlpha << 24) | 0xFFFFFF);
-                graphics.fill(x + imgWidth - 1, y, x + imgWidth, y + imgHeight, (borderAlpha << 24) | 0xFFFFFF);
+                boolean hovered = mouseX >= x && mouseX <= x + imgWidth
+                        && mouseY >= y && mouseY <= y + imgHeight;
+                int borderAlpha = hovered ? alpha : alpha / 2;
+                int borderColor = hovered ? 0xFFDD66 : 0xAAAAAA;
+                graphics.fill(x, y, x + imgWidth, y + 1, (borderAlpha << 24) | borderColor);
+                graphics.fill(x, y + imgHeight - 1, x + imgWidth, y + imgHeight, (borderAlpha << 24) | borderColor);
+                graphics.fill(x, y, x + 1, y + imgHeight, (borderAlpha << 24) | borderColor);
+                graphics.fill(x + imgWidth - 1, y, x + imgWidth, y + imgHeight, (borderAlpha << 24) | borderColor);
+                
+                if (hovered) {
+                    graphics.fill(x, y, x + imgWidth, y + imgHeight, (alpha / 10) << 24 | 0xFFDD66);
+                }
             }
             
             return imgHeight + IMAGE_SPACING;
@@ -676,23 +706,17 @@ public class ChangelogViewer extends Screen {
         cacheDir.mkdirs();
         File cacheFile = new File(cacheDir, hash + ".png");
         
-        synchronized (downloadingImages) {
-            if (downloadingImages.getOrDefault(url, false)) {
-                return null;
-            }
-        }
-
         if (cacheFile.exists()) {
             try {
                 FileInputStream fis = new FileInputStream(cacheFile);
                 BufferedImage bufferedImage = ImageIO.read(fis);
                 fis.close();
-
+                
                 if (bufferedImage != null) {
                     imageDimensions.put(url, new ImageData(bufferedImage.getWidth(), bufferedImage.getHeight()));
-
+                    
                     NativeImage nativeImage = convertBufferedImageToNativeImage(bufferedImage);
-
+                    
                     DynamicTexture dynamicTexture = new DynamicTexture(nativeImage);
                     minecraft.getTextureManager().register(location, dynamicTexture);
                     imageCache.put(url, location);
@@ -705,7 +729,7 @@ public class ChangelogViewer extends Screen {
                 cacheFile.delete();
             }
         }
-
+        
         synchronized (downloadingImages) {
             if (downloadingImages.getOrDefault(url, false)) {
                 return null;
@@ -733,9 +757,24 @@ public class ChangelogViewer extends Screen {
                 inputStream.close();
                 
                 BufferedImage bufferedImage = null;
-                try {
-                    bufferedImage = ImageIO.read(tempFile);
-                } catch (Exception e) {
+                
+                if (url.toLowerCase().endsWith(".webp")) {
+                    try {
+                        ImageIO.scanForPlugins();
+                        FileInputStream fis = new FileInputStream(tempFile);
+                        bufferedImage = ImageIO.read(fis);
+                        fis.close();
+                    } catch (Exception e) {
+                    }
+                }
+                
+                if (bufferedImage == null) {
+                    try {
+                        FileInputStream fis = new FileInputStream(tempFile);
+                        bufferedImage = ImageIO.read(fis);
+                        fis.close();
+                    } catch (Exception e) {
+                    }
                 }
                 
                 tempFile.delete();

@@ -8,7 +8,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.pixeldreamstudios.cthulib.client.BrightnessImageButton;
+import net.pixeldreamstudios.cthulib.client.ModListButton;
 import net.pixeldreamstudios.cthulib.client.ChangelogButton;
 import net.pixeldreamstudios.cthulib.client.ChangelogViewer;
 import net.pixeldreamstudios.cthulib.client.DevModeManager;
@@ -37,7 +37,7 @@ public abstract class TitleScreenMixin extends Screen {
     @Unique
     private boolean cthulib$pendingRebuild = false;
     @Unique
-    private static BrightnessImageButton cthulib$cachedBrightnessButton = null;
+    private static ModListButton cthulib$cachedBrightnessButton = null;
     @Unique
     private static PromoButton cthulib$cachedPromoButton = null;
     @Unique
@@ -102,8 +102,8 @@ public abstract class TitleScreenMixin extends Screen {
                 buttonLocation = ResourceLocation.fromNamespaceAndPath("cthulib", "textures/gui/button.png");
             }
 
-            cthulib$cachedBrightnessButton = new BrightnessImageButton(
-                    x, y, 20, 20,
+            cthulib$cachedBrightnessButton = new ModListButton(
+                    x, y, cfg.modlistButtonWidth, cfg.modlistButtonHeight,
                     buttonLocation,
                     b -> Minecraft.getInstance().setScreen(new ModsScreen(this)),
                     Component.literal(cfg.buttonTooltip),
@@ -301,18 +301,40 @@ public abstract class TitleScreenMixin extends Screen {
     
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (cthulib$quickConfigPanel != null && cthulib$quickConfigPanel.isVisible()) {
+            if (cthulib$quickConfigPanel.keyPressed(keyCode, scanCode, modifiers)) {
+                return true;
+            }
+        }
         if (cthulib$changelogOpen && keyCode == 256) {
             cthulib$closeChangelogOverlay();
             return true;
         }
         return super.keyPressed(keyCode, scanCode, modifiers);
     }
+
+    @Override
+    public boolean charTyped(char codePoint, int modifiers) {
+        if (cthulib$quickConfigPanel != null && cthulib$quickConfigPanel.isVisible()) {
+            if (cthulib$quickConfigPanel.charTyped(codePoint, modifiers)) {
+                return true;
+            }
+        }
+        return super.charTyped(codePoint, modifiers);
+    }
     
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (button == 1 && Screen.hasAltDown() && DevModeManager.isDevModeEnabled()) {
             CthuLibConfig cfg = CthuLibConfig.getInstance();
-            
+
+            if (cthulib$cachedBrightnessButton != null &&
+                cthulib$cachedBrightnessButton.isMouseOver(mouseX, mouseY)) {
+                cthulib$quickConfigPanel = new QuickConfigPanel("Modlist Button", (int)mouseX, (int)mouseY, null);
+                cthulib$quickConfigPanel.show();
+                return true;
+            }
+
             if (cfg.showPromoButton && cthulib$cachedPromoButton != null &&
                 cthulib$cachedPromoButton.isMouseOver(mouseX, mouseY)) {
                 cthulib$quickConfigPanel = new QuickConfigPanel("Promo Button", (int)mouseX, (int)mouseY, null);
@@ -408,15 +430,11 @@ public abstract class TitleScreenMixin extends Screen {
             cthulib$changelogOverlay = new ChangelogViewer(this);
         }
         cthulib$changelogOverlay.init(Minecraft.getInstance(), this.width, this.height);
-        cthulib$changelogOverlay.resetAnimation(); // Reset animation each time
+        cthulib$changelogOverlay.resetAnimation();
         cthulib$changelogOpen = true;
-        
-        CthuLibConfig config = CthuLibConfig.getInstance();
-        String version = ChangelogCache.getCurrentVersion();
-        if (version != null) {
-            config.lastReadChangelogVersion = version;
-            config.save();
-        }
+
+        String projectId = ChangelogCache.getProjectId();
+        ChangelogCache.markChangelogAsRead(projectId);
     }
     
     @Unique
