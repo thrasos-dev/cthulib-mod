@@ -87,6 +87,7 @@ public class CthuLibConfigScreen extends Screen {
 
         yPos += ENTRY_HEIGHT + 10;
         addSection("Modlist Button", yPos);
+        addCheckbox("Show Modlist Button", config.showModlistButton, val -> config.showModlistButton = val, leftX, yPos);
         addResetButton("Reset Modlist", yPos, () -> {
             config.resetModlistButton();
             config.save();

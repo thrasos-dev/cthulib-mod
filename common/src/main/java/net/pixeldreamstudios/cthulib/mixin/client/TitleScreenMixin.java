@@ -83,45 +83,47 @@ public abstract class TitleScreenMixin extends Screen {
         cthulib$lastScreenWidth = this.width;
         cthulib$lastScreenHeight = this.height;
 
-        if (cthulib$cachedBrightnessButton == null || needsRecreate) {
-            int x, y;
-            if (cfg.buttonXtitleScreen == 0 && cfg.buttonYtitleScreen == 0) {
-                x = this.width / 2 - 100 + 205;
-                y = this.height / 4 + 48 + 49;
-            } else {
-                x = cfg.buttonXtitleScreen;
-                y = cfg.buttonYtitleScreen;
-            }
+        if (cfg.showModlistButton) {
+            if (cthulib$cachedBrightnessButton == null || needsRecreate) {
+                int x, y;
+                if (cfg.buttonXtitleScreen == 0 && cfg.buttonYtitleScreen == 0) {
+                    x = this.width / 2 - 100 + 205;
+                    y = this.height / 4 + 48 + 49;
+                } else {
+                    x = cfg.buttonXtitleScreen;
+                    y = cfg.buttonYtitleScreen;
+                }
 
-            ResourceLocation buttonLocation;
-            try {
-                String texturePath = (cfg.brightnessButtonTexture != null && !cfg.brightnessButtonTexture.isEmpty()) 
-                    ? cfg.brightnessButtonTexture : cfg.buttonLogo;
-                buttonLocation = ResourceLocation.parse(texturePath);
-            } catch (Exception e) {
-                buttonLocation = ResourceLocation.fromNamespaceAndPath("cthulib", "textures/gui/button.png");
-            }
+                ResourceLocation buttonLocation;
+                try {
+                    String texturePath = (cfg.brightnessButtonTexture != null && !cfg.brightnessButtonTexture.isEmpty())
+                        ? cfg.brightnessButtonTexture : cfg.buttonLogo;
+                    buttonLocation = ResourceLocation.parse(texturePath);
+                } catch (Exception e) {
+                    buttonLocation = ResourceLocation.fromNamespaceAndPath("cthulib", "textures/gui/button.png");
+                }
 
-            cthulib$cachedBrightnessButton = new ModListButton(
-                    x, y, cfg.modlistButtonWidth, cfg.modlistButtonHeight,
-                    buttonLocation,
-                    b -> Minecraft.getInstance().setScreen(new ModsScreen(this)),
-                    Component.literal(cfg.buttonTooltip),
-                    UIElementPositionManager.ElementType.BRIGHTNESS_BUTTON_TITLE
-            );
-        } else {
-            int x, y;
-            if (cfg.buttonXtitleScreen == 0 && cfg.buttonYtitleScreen == 0) {
-                x = this.width / 2 - 100 + 205;
-                y = this.height / 4 + 48 + 49;
+                cthulib$cachedBrightnessButton = new ModListButton(
+                        x, y, cfg.modlistButtonWidth, cfg.modlistButtonHeight,
+                        buttonLocation,
+                        b -> Minecraft.getInstance().setScreen(new ModsScreen(this)),
+                        Component.literal(cfg.buttonTooltip),
+                        UIElementPositionManager.ElementType.BRIGHTNESS_BUTTON_TITLE
+                );
             } else {
-                x = cfg.buttonXtitleScreen;
-                y = cfg.buttonYtitleScreen;
+                int x, y;
+                if (cfg.buttonXtitleScreen == 0 && cfg.buttonYtitleScreen == 0) {
+                    x = this.width / 2 - 100 + 205;
+                    y = this.height / 4 + 48 + 49;
+                } else {
+                    x = cfg.buttonXtitleScreen;
+                    y = cfg.buttonYtitleScreen;
+                }
+                cthulib$cachedBrightnessButton.setX(x);
+                cthulib$cachedBrightnessButton.setY(y);
             }
-            cthulib$cachedBrightnessButton.setX(x);
-            cthulib$cachedBrightnessButton.setY(y);
+            this.addRenderableWidget(cthulib$cachedBrightnessButton);
         }
-        this.addRenderableWidget(cthulib$cachedBrightnessButton);
         
         if (cfg.showPromoButton) {
             if (cthulib$cachedPromoButton == null || needsRecreate) {

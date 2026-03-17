@@ -15,6 +15,7 @@ import java.util.List;
 public class CthuLibConfig {
     public boolean showInTitleScreen = true;
     public boolean showInSettings = true;
+    public boolean showModlistButton = true;
     public boolean resetResourcePacks = false;
     public List<String> authors = new ArrayList<>();
     public String buttonLogo = "cthulib:textures/gui/button_normal.png";
@@ -181,7 +182,7 @@ public class CthuLibConfig {
                         "sliderShowFilterButton", "sliderEntryAnimationEnabled", "sliderCardTransitionEnabled",
                         "showChangelogButton", "changelogButtonScaleWithScreen", "changelogButtonStartFromCenterX", "changelogButtonStartFromCenterY", "changelogButtonStartFromLeftX", "changelogButtonStartFromRightX",
                         "showChangelogNotification", "animationsEnabled", "shineEffectEnabled",
-                        "modlistButtonScaleWithScreen"};
+                        "modlistButtonScaleWithScreen", "showModlistButton"};
                 for (String field : boolFields) {
                     if (! existingJson.has(field)) {
                         needsSave = true;
@@ -248,6 +249,7 @@ public class CthuLibConfig {
         config.buttonYtitleScreen = 236;
         config.buttonXsettings = -1;
         config.buttonYsettings = 1;
+        config.showModlistButton = true;
         config.modlistButtonWidth = 20;
         config.modlistButtonHeight = 20;
         config.modlistButtonScale = 1.0f;
@@ -368,6 +370,7 @@ public class CthuLibConfig {
 
     public void resetModlistButton() {
         CthuLibConfig defaults = createDefault();
+        this.showModlistButton = defaults.showModlistButton;
         this.modlistButtonWidth = defaults.modlistButtonWidth;
         this.modlistButtonHeight = defaults.modlistButtonHeight;
         this.modlistButtonScale = defaults.modlistButtonScale;

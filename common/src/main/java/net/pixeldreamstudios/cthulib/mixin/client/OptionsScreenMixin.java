@@ -25,7 +25,7 @@ public abstract class OptionsScreenMixin extends Screen {
     private void onInit(CallbackInfo ci) {
         CthuLibConfig cfg = CthuLibConfig.get();
 
-        if (! cfg.showInSettings) {
+        if (!cfg.showInSettings || !cfg.showModlistButton) {
             return;
         }
 
