@@ -106,6 +106,8 @@ public class CthuLibConfigScreen extends Screen {
         yPos += ENTRY_HEIGHT;
         addCheckbox("Scale with Screen", config.modlistButtonScaleWithScreen, val -> config.modlistButtonScaleWithScreen = val, leftX, yPos);
         yPos += ENTRY_HEIGHT;
+        addCheckbox("Use Anchor (GUI-pixel offset)", config.modlistButtonUseAnchor, val -> config.modlistButtonUseAnchor = val, leftX, yPos);
+        yPos += ENTRY_HEIGHT;
         addFloatSlider("Min Scale", config.modlistButtonMinScale, 0.1f, 2.0f, val -> config.modlistButtonMinScale = val, leftX, yPos);
         yPos += ENTRY_HEIGHT;
         addFloatSlider("Max Scale", config.modlistButtonMaxScale, 0.1f, 3.0f, val -> config.modlistButtonMaxScale = val, leftX, yPos);
@@ -136,6 +138,8 @@ public class CthuLibConfigScreen extends Screen {
         addFloatSlider("Scale", config.promoButtonScale, 0.1f, 3.0f, val -> config.promoButtonScale = val, leftX, yPos);
         yPos += ENTRY_HEIGHT;
         addCheckbox("Scale with Screen", config.promoButtonScaleWithScreen, val -> config.promoButtonScaleWithScreen = val, leftX, yPos);
+        yPos += ENTRY_HEIGHT;
+        addCheckbox("Use Anchor (GUI-pixel offset)", config.promoButtonUseAnchor, val -> config.promoButtonUseAnchor = val, leftX, yPos);
         yPos += ENTRY_HEIGHT;
         addFloatSlider("Min Scale", config.promoButtonMinScale, 0.1f, 2.0f, val -> config.promoButtonMinScale = val, leftX, yPos);
         yPos += ENTRY_HEIGHT;
@@ -183,6 +187,8 @@ public class CthuLibConfigScreen extends Screen {
         addCheckbox("Start From Right X", config.sliderStartFromRightX, val -> config.sliderStartFromRightX = val, leftX, yPos);
         yPos += ENTRY_HEIGHT;
         addCheckbox("Scale With Screen", config.sliderScaleWithScreen, val -> config.sliderScaleWithScreen = val, leftX, yPos);
+        yPos += ENTRY_HEIGHT;
+        addCheckbox("Use Anchor (GUI-pixel offset)", config.sliderUseAnchor, val -> config.sliderUseAnchor = val, leftX, yPos);
         yPos += ENTRY_HEIGHT;
         addFloatSlider("Min Scale", config.sliderMinScale, 0.1f, 1.0f, val -> config.sliderMinScale = val, leftX, yPos);
         yPos += ENTRY_HEIGHT;
@@ -232,6 +238,8 @@ public class CthuLibConfigScreen extends Screen {
         addFloatSlider("Scale", config.changelogButtonScale, 0.1f, 3.0f, val -> config.changelogButtonScale = val, leftX, yPos);
         yPos += ENTRY_HEIGHT;
         addCheckbox("Scale with Screen", config.changelogButtonScaleWithScreen, val -> config.changelogButtonScaleWithScreen = val, leftX, yPos);
+        yPos += ENTRY_HEIGHT;
+        addCheckbox("Use Anchor (GUI-pixel offset)", config.changelogButtonUseAnchor, val -> config.changelogButtonUseAnchor = val, leftX, yPos);
         yPos += ENTRY_HEIGHT;
         addFloatSlider("Min Scale", config.changelogButtonMinScale, 0.1f, 2.0f, val -> config.changelogButtonMinScale = val, leftX, yPos);
         yPos += ENTRY_HEIGHT;

@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 public class UIElementPositionManager {
-    
+
     public enum ElementType {
         BRIGHTNESS_BUTTON_TITLE("brightness_button_title",
             cfg -> cfg.buttonXtitleScreen,
@@ -167,6 +167,16 @@ public class UIElementPositionManager {
                                       boolean enableScaling, float minScale, float maxScale,
                                       boolean startFromCenterX, boolean startFromCenterY,
                                       boolean startFromLeftX, boolean startFromRightX) {
+        endDragAdvanced(type, elementName, baseWidth, baseHeight, enableScaling, minScale, maxScale,
+                startFromCenterX, startFromCenterY, startFromLeftX, startFromRightX, false);
+    }
+
+    public static void endDragAdvanced(ElementType type, String elementName,
+                                      int baseWidth, int baseHeight,
+                                      boolean enableScaling, float minScale, float maxScale,
+                                      boolean startFromCenterX, boolean startFromCenterY,
+                                      boolean startFromLeftX, boolean startFromRightX,
+                                      boolean useAnchor) {
         DragState state = dragStates.get(type);
         if (state != null && state.isDragging) {
             state.isDragging = false;
@@ -176,48 +186,53 @@ public class UIElementPositionManager {
             Minecraft mc = Minecraft.getInstance();
             int screenWidth = mc.getWindow().getGuiScaledWidth();
             int screenHeight = mc.getWindow().getGuiScaledHeight();
-            
+
+            boolean scalePos = enableScaling && !useAnchor;
             float scaleFactor = calculateScaleFactor(enableScaling, minScale, maxScale);
             int width = calculateWidth(baseWidth, enableScaling, minScale, maxScale);
             int height = calculateHeight(baseHeight, enableScaling, minScale, maxScale);
-            
+
             int configX;
             if (startFromCenterX) {
-                int scaledConfigX = state.currentX - (screenWidth / 2) + (width / 2);
-                configX = enableScaling ? (int)(scaledConfigX / scaleFactor) : scaledConfigX;
+                int guiOffset = state.currentX - (screenWidth / 2) + (width / 2);
+                configX = scalePos ? (int)(guiOffset / scaleFactor) : guiOffset;
             } else if (startFromLeftX) {
-                configX = enableScaling ? (int)(state.currentX / scaleFactor) : state.currentX;
+                configX = scalePos ? (int)(state.currentX / scaleFactor) : state.currentX;
             } else if (startFromRightX) {
-                int scaledConfigX = state.currentX - screenWidth + width;
-                configX = enableScaling ? (int)(scaledConfigX / scaleFactor) : scaledConfigX;
+                int guiOffset = state.currentX - screenWidth + width;
+                configX = scalePos ? (int)(guiOffset / scaleFactor) : guiOffset;
+            } else if (useAnchor) {
+                configX = state.currentX - (screenWidth / 2) + (width / 2);
             } else {
-                configX = enableScaling ? (int)(state.currentX / scaleFactor) : state.currentX;
+                configX = scalePos ? (int)(state.currentX / scaleFactor) : state.currentX;
             }
-            
+
             int configY;
             if (startFromCenterY) {
-                int scaledConfigY = state.currentY - (screenHeight / 2) + (height / 2);
-                configY = enableScaling ? (int)(scaledConfigY / scaleFactor) : scaledConfigY;
+                int guiOffset = state.currentY - (screenHeight / 2) + (height / 2);
+                configY = scalePos ? (int)(guiOffset / scaleFactor) : guiOffset;
+            } else if (useAnchor) {
+                configY = state.currentY - (screenHeight / 4) - 48;
             } else {
                 if (state.currentY > screenHeight / 2) {
-                    int scaledConfigY = state.currentY - screenHeight;
-                    configY = enableScaling ? (int)(scaledConfigY / scaleFactor) : scaledConfigY;
+                    int guiOffset = state.currentY - screenHeight;
+                    configY = scalePos ? (int)(guiOffset / scaleFactor) : guiOffset;
                 } else {
-                    int scaledConfigY = state.currentY;
-                    configY = enableScaling ? (int)(scaledConfigY / scaleFactor) : scaledConfigY;
+                    configY = scalePos ? (int)(state.currentY / scaleFactor) : state.currentY;
                 }
             }
-            
+
             CthuLibConfig config = CthuLibConfig.getInstance();
             type.setX(config, configX);
             type.setY(config, configY);
             config.save();
-            
+
             if (mc.player != null) {
                 mc.player.displayClientMessage(
                     Component.literal(
-                        elementName + " Position Saved: Screen(" + state.currentX + ", " + state.currentY + 
-                        ") Config(" + configX + ", " + configY + ")"
+                        elementName + " Position Saved: Screen(" + state.currentX + ", " + state.currentY +
+                        ") Config(" + configX + ", " + configY + ")" +
+                        (useAnchor ? " [Anchored]" : "")
                     ),
                     true
                 );
@@ -226,13 +241,11 @@ public class UIElementPositionManager {
     }
 
     public static PositionInfo calculatePosition(ElementType type, int width, int height) {
-        // If dragging, return current drag position
         DragState state = dragStates.get(type);
         if (state != null && state.isDragging) {
             return new PositionInfo(state.currentX, state.currentY, width, height);
         }
         
-        // Otherwise calculate from config
         CthuLibConfig config = CthuLibConfig.getInstance();
         int configX = type.getX(config);
         int configY = type.getY(config);
@@ -246,47 +259,63 @@ public class UIElementPositionManager {
             boolean enableScaling, float minScale, float maxScale,
             boolean startFromCenterX, boolean startFromCenterY,
             boolean startFromLeftX, boolean startFromRightX) {
-        
+        return calculateAdvancedPosition(type, baseWidth, baseHeight, enableScaling, minScale, maxScale,
+                startFromCenterX, startFromCenterY, startFromLeftX, startFromRightX, false);
+    }
+
+    public static PositionInfo calculateAdvancedPosition(
+            ElementType type,
+            int baseWidth, int baseHeight,
+            boolean enableScaling, float minScale, float maxScale,
+            boolean startFromCenterX, boolean startFromCenterY,
+            boolean startFromLeftX, boolean startFromRightX,
+            boolean useAnchor) {
+
         DragState state = dragStates.get(type);
         if (state != null && state.isDragging) {
-            return new PositionInfo(state.currentX, state.currentY, 
-                                   state != null ? calculateWidth(baseWidth, enableScaling, minScale, maxScale) : baseWidth,
-                                   state != null ? calculateHeight(baseHeight, enableScaling, minScale, maxScale) : baseHeight);
+            return new PositionInfo(state.currentX, state.currentY,
+                                   calculateWidth(baseWidth, enableScaling, minScale, maxScale),
+                                   calculateHeight(baseHeight, enableScaling, minScale, maxScale));
         }
-        
+
         int width = calculateWidth(baseWidth, enableScaling, minScale, maxScale);
         int height = calculateHeight(baseHeight, enableScaling, minScale, maxScale);
-        
+
         CthuLibConfig config = CthuLibConfig.getInstance();
         int configX = type.getX(config);
         int configY = type.getY(config);
-        
+
+        boolean scalePos = enableScaling && !useAnchor;
         float scaleFactor = calculateScaleFactor(enableScaling, minScale, maxScale);
-        int scaledConfigX = enableScaling ? (int)(configX * scaleFactor) : configX;
-        int scaledConfigY = enableScaling ? (int)(configY * scaleFactor) : configY;
-        
+        int scaledConfigX = scalePos ? (int)(configX * scaleFactor) : configX;
+        int scaledConfigY = scalePos ? (int)(configY * scaleFactor) : configY;
+
         Minecraft mc = Minecraft.getInstance();
         int screenWidth = mc.getWindow().getGuiScaledWidth();
         int screenHeight = mc.getWindow().getGuiScaledHeight();
-        
+
         int finalX, finalY;
-        
+
         if (startFromCenterX) {
             finalX = (screenWidth / 2) + scaledConfigX - (width / 2);
         } else if (startFromLeftX) {
             finalX = scaledConfigX;
         } else if (startFromRightX) {
             finalX = screenWidth - width + scaledConfigX;
+        } else if (useAnchor) {
+            finalX = (screenWidth / 2) - (width / 2) + scaledConfigX;
         } else {
             finalX = scaledConfigX;
         }
-        
+
         if (startFromCenterY) {
             finalY = (screenHeight / 2) + scaledConfigY - (height / 2);
+        } else if (useAnchor) {
+            finalY = (screenHeight / 4) + 48 + scaledConfigY;
         } else {
             finalY = scaledConfigY < 0 ? screenHeight + scaledConfigY : scaledConfigY;
         }
-        
+
         return new PositionInfo(finalX, finalY, width, height);
     }
     

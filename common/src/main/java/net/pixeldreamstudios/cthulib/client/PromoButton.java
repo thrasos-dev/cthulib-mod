@@ -58,7 +58,8 @@ public class PromoButton extends DraggableTitleScreenWidget {
                 config.promoButtonStartFromCenterX,
                 config.promoButtonStartFromCenterY,
                 config.promoButtonStartFromLeftX,
-                config.promoButtonStartFromRightX
+                config.promoButtonStartFromRightX,
+                config.promoButtonUseAnchor
             );
         
         this.width = pos.width;
@@ -170,7 +171,8 @@ public class PromoButton extends DraggableTitleScreenWidget {
                 config.promoButtonStartFromCenterX,
                 config.promoButtonStartFromCenterY,
                 config.promoButtonStartFromLeftX,
-                config.promoButtonStartFromRightX
+                config.promoButtonStartFromRightX,
+                config.promoButtonUseAnchor
             );
             return true;
         }

@@ -28,6 +28,7 @@ public class CthuLibConfig {
     public int modlistButtonHeight = 20;
     public float modlistButtonScale = 1.0f;
     public boolean modlistButtonScaleWithScreen = false;
+    public boolean modlistButtonUseAnchor = false;
     public float modlistButtonMinScale = 0.5f;
     public float modlistButtonMaxScale = 1.5f;
     public boolean showName = true;
@@ -51,6 +52,7 @@ public class CthuLibConfig {
     public int promoButtonY = -50;
     public int promoButtonWidth = 100;
     public int promoButtonHeight = 25;    public float promoButtonScale = 1.0f;    public boolean promoButtonScaleWithScreen = false;
+    public boolean promoButtonUseAnchor = false;
     public float promoButtonMinScale = 0.5f;
     public float promoButtonMaxScale = 1.5f;
     public boolean promoButtonStartFromCenterX = true;
@@ -75,6 +77,7 @@ public class CthuLibConfig {
     public boolean sliderStartFromLeftX = false;
     public boolean sliderStartFromRightX = false;
     public boolean sliderScaleWithScreen = false;
+    public boolean sliderUseAnchor = false;
     public float sliderMinScale = 0.5f;
     public float sliderMaxScale = 1.5f;
     public boolean sliderShowFilterButton = true;
@@ -85,7 +88,6 @@ public class CthuLibConfig {
     public String sliderArrowHoverColor = "FFAA33";
     public String sliderBlacklistedProjects = "";
     public String sliderUnmaintainedProjects = "";
-
     public boolean showChangelogButton = true;
     public String changelogButtonTexture = "cthulib:textures/gui/changelog_button.png";
     public int changelogButtonX = -130;
@@ -94,6 +96,7 @@ public class CthuLibConfig {
     public int changelogButtonHeight = 50;
     public float changelogButtonScale = 0.5f;
     public boolean changelogButtonScaleWithScreen = false;
+    public boolean changelogButtonUseAnchor = false;
     public float changelogButtonMinScale = 0.5f;
     public float changelogButtonMaxScale = 1.5f;
     public boolean changelogButtonStartFromCenterX = true;
@@ -177,12 +180,12 @@ public class CthuLibConfig {
                     }
                 }
                 
-                String[] boolFields = {"promoButtonScaleWithScreen", "promoButtonStartFromCenterX", "promoButtonStartFromCenterY", "promoButtonStartFromLeftX", "promoButtonStartFromRightX",
-                        "showProjectSlider", "sliderAutoSlide", "sliderShowPreviews", "sliderStartFromCenterX", "sliderStartFromCenterY", "sliderStartFromLeftX", "sliderStartFromRightX", "sliderScaleWithScreen",
+                String[] boolFields = {"promoButtonScaleWithScreen", "promoButtonUseAnchor", "promoButtonStartFromCenterX", "promoButtonStartFromCenterY", "promoButtonStartFromLeftX", "promoButtonStartFromRightX",
+                        "showProjectSlider", "sliderAutoSlide", "sliderShowPreviews", "sliderStartFromCenterX", "sliderStartFromCenterY", "sliderStartFromLeftX", "sliderStartFromRightX", "sliderScaleWithScreen", "sliderUseAnchor",
                         "sliderShowFilterButton", "sliderEntryAnimationEnabled", "sliderCardTransitionEnabled",
-                        "showChangelogButton", "changelogButtonScaleWithScreen", "changelogButtonStartFromCenterX", "changelogButtonStartFromCenterY", "changelogButtonStartFromLeftX", "changelogButtonStartFromRightX",
+                        "showChangelogButton", "changelogButtonScaleWithScreen", "changelogButtonUseAnchor", "changelogButtonStartFromCenterX", "changelogButtonStartFromCenterY", "changelogButtonStartFromLeftX", "changelogButtonStartFromRightX",
                         "showChangelogNotification", "animationsEnabled", "shineEffectEnabled",
-                        "modlistButtonScaleWithScreen", "showModlistButton"};
+                        "modlistButtonScaleWithScreen", "modlistButtonUseAnchor", "showModlistButton"};
                 for (String field : boolFields) {
                     if (! existingJson.has(field)) {
                         needsSave = true;

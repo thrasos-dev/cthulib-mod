@@ -165,36 +165,38 @@ public abstract class TitleScreenMixin extends Screen {
 
         if (cfg.showProjectSlider) {
             if (cthulib$cachedProjectSlider == null || needsRecreate) {
-                int sliderY = cfg.sliderY < 0 ? this.height + cfg.sliderY : cfg.sliderY;
-                
                 float responsiveScale = cfg.sliderScale;
                 if (cfg.sliderScaleWithScreen) {
-                    float baseWidth = 1920.0f;
-                    float baseHeight = 1080.0f;
-                    float widthRatio = this.width / baseWidth;
-                    float heightRatio = this.height / baseHeight;
-                    float screenScale = Math.min(widthRatio, heightRatio);
+                    float screenScale = Math.min(this.width / 1920.0f, this.height / 1080.0f);
                     responsiveScale = Math.max(cfg.sliderMinScale, Math.min(cfg.sliderMaxScale, cfg.sliderScale * screenScale));
                 }
-                
+
+                int sliderWidth = (int)(cfg.sliderCardWidth * responsiveScale);
+                int fullSliderWidth = sliderWidth + (int)(100 * responsiveScale);
+
                 int sliderX;
-                if (cfg.sliderStartFromCenterX) {
-                    int sliderWidth = (int)(cfg.sliderCardWidth * responsiveScale);
+                if (cfg.sliderUseAnchor) {
+                    sliderX = (this.width / 2) - (fullSliderWidth / 2) + cfg.sliderX;
+                } else if (cfg.sliderStartFromCenterX) {
                     sliderX = (this.width / 2) - (sliderWidth / 2) + (int)(cfg.sliderX * responsiveScale);
                 } else if (cfg.sliderStartFromLeftX) {
                     sliderX = (int)(cfg.sliderX * responsiveScale);
                 } else if (cfg.sliderStartFromRightX) {
-                    int sliderWidth = (int)(cfg.sliderCardWidth * responsiveScale);
                     sliderX = this.width - sliderWidth + (int)(cfg.sliderX * responsiveScale);
                 } else {
                     int scaledX = (int)(cfg.sliderX * responsiveScale);
                     sliderX = cfg.sliderX < 0 ? this.width + scaledX : scaledX;
                 }
-                
-                if (cfg.sliderScaleWithScreen) {
+
+                int sliderY;
+                if (cfg.sliderUseAnchor) {
+                    sliderY = this.height / 4 + 48 + cfg.sliderY;
+                } else if (cfg.sliderScaleWithScreen) {
                     sliderY = cfg.sliderY < 0 ? this.height + (int)(cfg.sliderY * responsiveScale) : (int)(cfg.sliderY * responsiveScale);
+                } else {
+                    sliderY = cfg.sliderY < 0 ? this.height + cfg.sliderY : cfg.sliderY;
                 }
-                
+
                 cthulib$cachedProjectSlider = new ProjectSlider(sliderX, sliderY, cfg.sliderCardWidth, cfg.sliderCardHeight, 
                         cfg.sliderAutoSlide, cfg.sliderAutoSlideDelay, cfg.sliderShowPreviews, cfg.sliderPreviewScale, cfg.sliderPreviewOffset, responsiveScale);
             }
@@ -240,8 +242,6 @@ public abstract class TitleScreenMixin extends Screen {
         CthuLibConfig cfg = CthuLibConfig.get();
         if (!cfg.showProjectSlider) return;
 
-        int sliderY = cfg.sliderY < 0 ? this.height + cfg.sliderY : cfg.sliderY;
-
         float responsiveScale = cfg.sliderScale;
         if (cfg.sliderScaleWithScreen) {
             float screenScale = Math.min(this.width / 1920.0f, this.height / 1080.0f);
@@ -249,8 +249,11 @@ public abstract class TitleScreenMixin extends Screen {
         }
 
         int sliderWidth = (int)(cfg.sliderCardWidth * responsiveScale);
+        int fullSliderWidth = sliderWidth + (int)(100 * responsiveScale);
         int sliderX;
-        if (cfg.sliderStartFromCenterX) {
+        if (cfg.sliderUseAnchor) {
+            sliderX = (this.width / 2) - (fullSliderWidth / 2) + cfg.sliderX;
+        } else if (cfg.sliderStartFromCenterX) {
             sliderX = (this.width / 2) - (sliderWidth / 2) + (int)(cfg.sliderX * responsiveScale);
         } else if (cfg.sliderStartFromLeftX) {
             sliderX = (int)(cfg.sliderX * responsiveScale);
@@ -260,8 +263,13 @@ public abstract class TitleScreenMixin extends Screen {
             int scaledX = (int)(cfg.sliderX * responsiveScale);
             sliderX = cfg.sliderX < 0 ? this.width + scaledX : scaledX;
         }
-        if (cfg.sliderScaleWithScreen) {
+        int sliderY;
+        if (cfg.sliderUseAnchor) {
+            sliderY = this.height / 4 + 48 + cfg.sliderY;
+        } else if (cfg.sliderScaleWithScreen) {
             sliderY = cfg.sliderY < 0 ? this.height + (int)(cfg.sliderY * responsiveScale) : (int)(cfg.sliderY * responsiveScale);
+        } else {
+            sliderY = cfg.sliderY < 0 ? this.height + cfg.sliderY : cfg.sliderY;
         }
 
         cthulib$cachedProjectSlider = new ProjectSlider(sliderX, sliderY, cfg.sliderCardWidth, cfg.sliderCardHeight,

@@ -30,13 +30,19 @@ dependencies {
     common(project(path: ':common', configuration: 'namedElements')) { transitive = false }
     shadowBundle project(path: ':common', configuration: 'transformProductionFabric')
     modCompileOnly("com.terraformersmc:modmenu:11.0.3")
-    implementation 'com.github.usefulness:webp-imageio:0.10.2'
-    shadowBundle 'com.github.usefulness:webp-imageio:0.10.2'
-    implementation 'com.vladsch.flexmark:flexmark-html2md-converter:0.64.8'
-    shadowBundle 'com.vladsch.flexmark:flexmark-html2md-converter:0.64.8'
-    implementation 'org.sejda.imageio:webp-imageio:0.1.6'
+    implementation('com.github.usefulness:webp-imageio:0.10.2') {
+        exclude group: 'org.jetbrains.kotlin'
+    }
+    shadowBundle('com.github.usefulness:webp-imageio:0.10.2') {
+        exclude group: 'org.jetbrains.kotlin'
+    }
 
-    implementation 'com.vladsch.flexmark:flexmark-html2md-converter:0.64.8'
+    implementation('com.vladsch.flexmark:flexmark-html2md-converter:0.64.8') {
+        exclude group: 'org.jetbrains.kotlin'
+    }
+    shadowBundle('com.vladsch.flexmark:flexmark-html2md-converter:0.64.8') {
+        exclude group: 'org.jetbrains.kotlin'
+    }
 }
 
 processResources {
@@ -51,11 +57,10 @@ shadowJar {
     configurations = [project.configurations.shadowBundle]
     archiveClassifier = 'dev-shadow'
 
-    eachFile { file ->
-        if (file.name == 'module-info.class') {
-            file.exclude()
-        }
-    }
+    exclude 'module-info.class'
+    exclude '**/module-info.class'
+    exclude 'kotlin/**'
+    exclude 'META-INF/*.kotlin_module'
 }
 
 remapJar {

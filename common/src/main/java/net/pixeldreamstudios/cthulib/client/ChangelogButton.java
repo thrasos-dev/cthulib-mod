@@ -46,7 +46,8 @@ public class ChangelogButton extends DraggableTitleScreenWidget {
                 config.changelogButtonStartFromCenterX,
                 config.changelogButtonStartFromCenterY,
                 config.changelogButtonStartFromLeftX,
-                config.changelogButtonStartFromRightX
+                config.changelogButtonStartFromRightX,
+                config.changelogButtonUseAnchor
             );
         
         this.width = pos.width;
@@ -226,7 +227,8 @@ public class ChangelogButton extends DraggableTitleScreenWidget {
                 config.changelogButtonStartFromCenterX,
                 config.changelogButtonStartFromCenterY,
                 config.changelogButtonStartFromLeftX,
-                config.changelogButtonStartFromRightX
+                config.changelogButtonStartFromRightX,
+                config.changelogButtonUseAnchor
             );
             return true;
         }

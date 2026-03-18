@@ -78,6 +78,8 @@ public class QuickConfigPanel {
                 yPos += entryHeight;
                 addCheckbox("Scale with Screen", cfg.promoButtonScaleWithScreen, val -> cfg.promoButtonScaleWithScreen = val, x, yPos);
                 yPos += entryHeight;
+                addCheckbox("Use Anchor (GUI-pixel offset)", cfg.promoButtonUseAnchor, val -> cfg.promoButtonUseAnchor = val, x, yPos);
+                yPos += entryHeight;
                 addCheckbox("Start From Center X", cfg.promoButtonStartFromCenterX, val -> cfg.promoButtonStartFromCenterX = val, x, yPos);
                 yPos += entryHeight;
                 addCheckbox("Start From Center Y", cfg.promoButtonStartFromCenterY, val -> cfg.promoButtonStartFromCenterY = val, x, yPos);
@@ -119,6 +121,8 @@ public class QuickConfigPanel {
                 }, x, yPos);
                 yPos += entryHeight;
                 addCheckbox("Scale with Screen", cfg.sliderScaleWithScreen, val -> cfg.sliderScaleWithScreen = val, x, yPos);
+                yPos += entryHeight;
+                addCheckbox("Use Anchor (GUI-pixel offset)", cfg.sliderUseAnchor, val -> cfg.sliderUseAnchor = val, x, yPos);
                 yPos += entryHeight;
                 addCheckbox("Start From Center X", cfg.sliderStartFromCenterX, val -> cfg.sliderStartFromCenterX = val, x, yPos);
                 yPos += entryHeight;
@@ -179,6 +183,8 @@ public class QuickConfigPanel {
                 yPos += entryHeight;
                 addCheckbox("Scale with Screen", cfg.changelogButtonScaleWithScreen, val -> cfg.changelogButtonScaleWithScreen = val, x, yPos);
                 yPos += entryHeight;
+                addCheckbox("Use Anchor (GUI-pixel offset)", cfg.changelogButtonUseAnchor, val -> cfg.changelogButtonUseAnchor = val, x, yPos);
+                yPos += entryHeight;
                 addCheckbox("Start From Center X", cfg.changelogButtonStartFromCenterX, val -> cfg.changelogButtonStartFromCenterX = val, x, yPos);
                 yPos += entryHeight;
                 addCheckbox("Start From Center Y", cfg.changelogButtonStartFromCenterY, val -> cfg.changelogButtonStartFromCenterY = val, x, yPos);
@@ -211,6 +217,8 @@ public class QuickConfigPanel {
                 addFloatSlider("Scale", cfg.modlistButtonScale, 0.3f, 3.0f, val -> cfg.modlistButtonScale = val, x, yPos);
                 yPos += entryHeight;
                 addCheckbox("Scale with Screen", cfg.modlistButtonScaleWithScreen, val -> cfg.modlistButtonScaleWithScreen = val, x, yPos);
+                yPos += entryHeight;
+                addCheckbox("Use Anchor (GUI-pixel offset)", cfg.modlistButtonUseAnchor, val -> cfg.modlistButtonUseAnchor = val, x, yPos);
                 yPos += entryHeight;
                 addLabel("── Animations ──", x, yPos);
                 yPos += labelHeight;

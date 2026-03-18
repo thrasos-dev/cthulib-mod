@@ -7,7 +7,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.pixeldreamstudios.cthulib.client.base.DraggableTitleScreenWidget;
 import net.pixeldreamstudios.cthulib.config.CthuLibConfig;
-import net.pixeldreamstudios.cthulib.client.ShineEffect;
 
 public class ModListButton extends DraggableTitleScreenWidget {
     private final ResourceLocation texture;
@@ -46,7 +45,8 @@ public class ModListButton extends DraggableTitleScreenWidget {
                         cfg.modlistButtonScaleWithScreen,
                         cfg.modlistButtonMinScale,
                         cfg.modlistButtonMaxScale,
-                        false, false, false, false
+                        false, false, false, false,
+                        cfg.modlistButtonUseAnchor
                     );
                 this.width = pos.width;
                 this.height = pos.height;
@@ -132,7 +132,8 @@ public class ModListButton extends DraggableTitleScreenWidget {
                     config.modlistButtonScaleWithScreen,
                     config.modlistButtonMinScale,
                     config.modlistButtonMaxScale,
-                    false, false, false, false
+                    false, false, false, false,
+                    config.modlistButtonUseAnchor
                 );
             } else {
                 UIElementPositionManager.endDrag(elementType, getWidgetName());

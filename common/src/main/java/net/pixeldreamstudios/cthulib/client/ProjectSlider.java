@@ -103,8 +103,12 @@ public class ProjectSlider extends DraggableTitleScreenWidget {
             }
 
             int sliderWidthCalc = (int)(cfg.sliderCardWidth * responsiveScale);
+
+            boolean useAnchor = cfg.sliderUseAnchor;
             int newX;
-            if (cfg.sliderStartFromCenterX) {
+            if (useAnchor) {
+                newX = (screenWidth / 2) - (this.width / 2) + cfg.sliderX;
+            } else if (cfg.sliderStartFromCenterX) {
                 newX = (screenWidth / 2) - (sliderWidthCalc / 2) + (int)(cfg.sliderX * responsiveScale);
             } else if (cfg.sliderStartFromLeftX) {
                 newX = (int)(cfg.sliderX * responsiveScale);
@@ -116,7 +120,9 @@ public class ProjectSlider extends DraggableTitleScreenWidget {
             }
 
             int newY;
-            if (cfg.sliderScaleWithScreen) {
+            if (useAnchor) {
+                newY = screenHeight / 4 + 48 + cfg.sliderY;
+            } else if (cfg.sliderScaleWithScreen) {
                 newY = cfg.sliderY < 0 ? screenHeight + (int)(cfg.sliderY * responsiveScale) : (int)(cfg.sliderY * responsiveScale);
             } else {
                 newY = cfg.sliderY < 0 ? screenHeight + cfg.sliderY : cfg.sliderY;
@@ -168,26 +174,34 @@ public class ProjectSlider extends DraggableTitleScreenWidget {
                 responsiveScale = Math.max(cfg.sliderMinScale, Math.min(cfg.sliderMaxScale, cfg.sliderScale * sf));
             }
 
-            int configX;
+            boolean useAnchor = cfg.sliderUseAnchor;
             float rs = responsiveScale > 0 ? responsiveScale : 1f;
-            if (cfg.sliderStartFromCenterX) {
+            int configX;
+            if (useAnchor) {
+                configX = screenX - (screenWidth / 2) + (this.width / 2);
+            } else if (cfg.sliderStartFromCenterX) {
                 int halfCard = (int)(cfg.sliderCardWidth * responsiveScale / 2);
-                configX = (int)((screenX - (screenWidth / 2) + halfCard) / rs);
+                int guiOffset = screenX - (screenWidth / 2) + halfCard;
+                configX = (int)(guiOffset / rs);
             } else if (cfg.sliderStartFromLeftX) {
                 configX = (int)(screenX / rs);
             } else if (cfg.sliderStartFromRightX) {
                 int cardW = (int)(cfg.sliderCardWidth * responsiveScale);
-                configX = (int)((screenX - screenWidth + cardW) / rs);
+                int guiOffset = screenX - screenWidth + cardW;
+                configX = (int)(guiOffset / rs);
             } else {
                 if (screenX < screenWidth / 2) {
                     configX = (int)(screenX / rs);
                 } else {
-                    configX = (int)((screenX - screenWidth) / rs);
+                    int guiOffset = screenX - screenWidth;
+                    configX = (int)(guiOffset / rs);
                 }
             }
 
             int configY;
-            if (cfg.sliderScaleWithScreen) {
+            if (useAnchor) {
+                configY = screenY - (screenHeight / 4) - 48;
+            } else if (cfg.sliderScaleWithScreen) {
                 configY = screenY > screenHeight / 2 ? (int)((screenY - screenHeight) / rs) : (int)(screenY / rs);
             } else {
                 configY = screenY > screenHeight / 2 ? screenY - screenHeight : screenY;
