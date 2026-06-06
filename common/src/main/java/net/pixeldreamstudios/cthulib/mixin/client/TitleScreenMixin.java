@@ -25,6 +25,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.lang.ref.WeakReference;
+
 @Mixin(TitleScreen.class)
 public abstract class TitleScreenMixin extends Screen {
     
@@ -49,6 +51,8 @@ public abstract class TitleScreenMixin extends Screen {
     @Unique
     private static int cthulib$lastScreenHeight = -1;
     @Unique
+    private static WeakReference<TitleScreen> cthulib$activeTitleScreen = new WeakReference<>(null);
+    @Unique
     private static void cthulib$invalidateCache() {
         cthulib$cachedBrightnessButton = null;
         cthulib$cachedPromoButton = null;
@@ -72,7 +76,11 @@ public abstract class TitleScreenMixin extends Screen {
             return;
         }
         
-        boolean needsRecreate = cthulib$lastScreenWidth == -1 && cthulib$lastScreenHeight == -1;
+        TitleScreen self = (TitleScreen) (Object) this;
+        TitleScreen previousScreen = cthulib$activeTitleScreen.get();
+        boolean isSameInstanceReinit = previousScreen == self;
+        cthulib$activeTitleScreen = new WeakReference<>(self);
+        boolean needsRecreate = !isSameInstanceReinit;
 
         if (CthuLibConfig.needsCacheInvalidation()) {
             cthulib$invalidateCache();
