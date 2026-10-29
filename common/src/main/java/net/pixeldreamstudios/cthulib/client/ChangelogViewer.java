@@ -13,6 +13,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.pixeldreamstudios.cthulib.config.CthuLibConfig;
 import net.pixeldreamstudios.cthulib.util.ChangelogCache;
+import net.pixeldreamstudios.cthulib.util.ChangelogCache.CachedChangelog;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -26,6 +27,9 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -34,7 +38,10 @@ import java.util.Map;
 public class ChangelogViewer extends Screen {
     
     private final Screen parent;
-    private final String changelog;
+    private String changelog;
+    private List<CachedChangelog> cachedHistory = new ArrayList<>();
+    private int historyIndex = -1;
+    private String displayedVersion;
     private List<MarkdownLine> lines = new ArrayList<>();
     private int scrollOffset = 0;
     private int maxScroll = 0;
@@ -75,20 +82,61 @@ public class ChangelogViewer extends Screen {
         }
         
         this.changelog = ChangelogCache.getChangelog(projectId, version);
+        this.displayedVersion = version;
+
+        this.cachedHistory = ChangelogCache.listCachedChangelogsSorted();
+        String displayedDate = ChangelogCache.getDisplayedFileDate();
+        int idx = ChangelogCache.findIndexForFileDate(cachedHistory, displayedDate);
+        if (idx < 0) {
+            idx = ChangelogCache.findIndexForVersion(cachedHistory, version);
+        }
+        this.historyIndex = idx;
+        if (idx >= 0) {
+            this.displayedVersion = cachedHistory.get(idx).version;
+        }
+    }
+
+    private void navigateTo(int index) {
+        if (cachedHistory == null || index < 0 || index >= cachedHistory.size()) {
+            return;
+        }
+        CachedChangelog entry = cachedHistory.get(index);
+        historyIndex = index;
+        displayedVersion = entry.version;
+        changelog = entry.changelog;
+        parseMarkdown();
+        calculateMaxScroll();
+        scrollOffset = 0;
+        updateNavButtonStates();
     }
     
     public void resetAnimation() {
         panelOpenAnimation = 0.0f;
     }
 
+    private Button navPrevButton;
+    private Button navNextButton;
+    private Button navFirstButton;
+    private Button navLatestButton;
+    private static final int NAV_BUTTON_SIZE = 20;
+    private static final int NAV_JUMP_WIDTH = 26;
+    private static final int NAV_GAP = 4;
+    private static final int NAV_LABEL_WIDTH = 190;
+    private static final DateTimeFormatter NAV_DATE_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy · HH:mm");
+    private int navBarX = 0;
+    private int navBarY = 0;
+    private int navBarWidth = 0;
+    private int navBarHeight = 0;
+    private float navScale = 1.0f;
+
     @Override
     protected void init() {
         super.init();
-        
+
         if (lines == null || lines.isEmpty()) {
             parseMarkdown();
         }
-        
+
         if (parent instanceof TitleScreen) {
         } else {
             addRenderableWidget(Button.builder(Component.literal("Close"),
@@ -96,8 +144,31 @@ public class ChangelogViewer extends Screen {
                     .bounds(this.width / 2 - 50, this.height - 30, 100, 20)
                     .build());
         }
-        
+
+        if (cachedHistory != null && cachedHistory.size() > 1) {
+            navFirstButton = Button.builder(Component.literal("<<"), btn -> navigateTo(0))
+                    .bounds(0, 0, NAV_JUMP_WIDTH, NAV_BUTTON_SIZE).build();
+            navPrevButton = Button.builder(Component.literal("<"), btn -> navigateTo(historyIndex - 1))
+                    .bounds(0, 0, NAV_BUTTON_SIZE, NAV_BUTTON_SIZE).build();
+            navNextButton = Button.builder(Component.literal(">"), btn -> navigateTo(historyIndex + 1))
+                    .bounds(0, 0, NAV_BUTTON_SIZE, NAV_BUTTON_SIZE).build();
+            navLatestButton = Button.builder(Component.literal(">>"), btn -> navigateTo(cachedHistory.size() - 1))
+                    .bounds(0, 0, NAV_JUMP_WIDTH, NAV_BUTTON_SIZE).build();
+
+            updateNavButtonStates();
+        }
+
         calculateMaxScroll();
+    }
+
+    private void updateNavButtonStates() {
+        if (navPrevButton == null) return;
+        boolean hasPrev = historyIndex > 0;
+        boolean hasNext = historyIndex >= 0 && historyIndex < cachedHistory.size() - 1;
+        navFirstButton.active = hasPrev;
+        navPrevButton.active = hasPrev;
+        navNextButton.active = hasNext;
+        navLatestButton.active = hasNext;
     }
 
     private void parseMarkdown() {
@@ -220,7 +291,8 @@ public class ChangelogViewer extends Screen {
         }
         
         String cleanedText = textToClean.replaceAll("\\[([^\\]]+)\\]\\([^)]+\\)", "$1");
-        
+        cleanedText = cleanedText.replaceAll("\\\\([\\\\`*_{}\\[\\]()#+\\-.!~&>])", "$1");
+
         return new MarkdownLine(cleanedText, style, null, null);
     }
 
@@ -275,20 +347,127 @@ public class ChangelogViewer extends Screen {
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics, mouseX, mouseY, partialTick);
         renderChangelogPanel(graphics, mouseX, mouseY, partialTick);
+        renderNavBar(graphics);
         super.render(graphics, mouseX, mouseY, partialTick);
+    }
+
+    private void renderNavBar(GuiGraphics graphics) {
+        if (navPrevButton == null || cachedHistory == null || cachedHistory.isEmpty()) {
+            return;
+        }
+
+        String label = buildNavLabel();
+        int textWidth = this.font.width(label);
+        int screenHeight = this.minecraft != null ? this.minecraft.getWindow().getGuiScaledHeight() : this.height;
+
+        int padding = 8;
+        int labelWidth = Math.max(textWidth + 8, 60);
+        int baseWidth = NAV_JUMP_WIDTH + NAV_GAP + NAV_BUTTON_SIZE + NAV_GAP
+                + labelWidth + NAV_GAP + NAV_BUTTON_SIZE + NAV_GAP + NAV_JUMP_WIDTH + padding * 2;
+        int baseHeight = NAV_BUTTON_SIZE + padding * 2;
+
+        // Scale the whole pill down so it fits under the panel within the screen.
+        int availableBelow = screenHeight - 2 - (panelY + panelHeight + 6);
+        float fitH = availableBelow >= baseHeight ? 1.0f : Math.max(0.4f, (float) availableBelow / baseHeight);
+        float fitW = baseWidth <= panelWidth ? 1.0f : Math.max(0.4f, (float) panelWidth / baseWidth);
+        navScale = Math.min(fitH, fitW);
+
+        int scaledW = Math.round(baseWidth * navScale);
+        int scaledH = Math.round(baseHeight * navScale);
+        navBarWidth = scaledW;
+        navBarHeight = scaledH;
+        navBarX = panelX + (panelWidth - scaledW) / 2;
+        navBarY = panelY + panelHeight + 6;
+
+        PoseStack pose = graphics.pose();
+        pose.pushPose();
+        pose.translate(navBarX, navBarY, 0);
+        pose.scale(navScale, navScale, 1.0f);
+
+        // From here everything is drawn in base (unscaled) coords relative to the pill origin.
+        graphics.fill(0, 0, baseWidth, baseHeight, 0xE61A1A1A);
+        graphics.fill(0, 0, baseWidth, 1, 0x99FFAA66);
+        graphics.fill(0, baseHeight - 1, baseWidth, baseHeight, 0x99FF8833);
+        graphics.fill(0, 0, 1, baseHeight, 0x99FFAA66);
+        graphics.fill(baseWidth - 1, 0, baseWidth, baseHeight, 0x99FF8833);
+
+        int btnY = padding;
+        int lx = padding;
+        navFirstButton.setPosition(lx, btnY);
+        lx += NAV_JUMP_WIDTH + NAV_GAP;
+        navPrevButton.setPosition(lx, btnY);
+        lx += NAV_BUTTON_SIZE + NAV_GAP;
+        int labelX = lx;
+        lx += labelWidth + NAV_GAP;
+        navNextButton.setPosition(lx, btnY);
+        lx += NAV_BUTTON_SIZE + NAV_GAP;
+        navLatestButton.setPosition(lx, btnY);
+
+        navFirstButton.render(graphics, -1, -1, 0);
+        navPrevButton.render(graphics, -1, -1, 0);
+        navNextButton.render(graphics, -1, -1, 0);
+        navLatestButton.render(graphics, -1, -1, 0);
+
+        int labelDrawX = labelX + (labelWidth - textWidth) / 2;
+        graphics.drawString(this.font, label, labelDrawX, btnY + 6, 0xFFDD99, false);
+
+        pose.popPose();
+    }
+
+    private boolean navClickAt(double mx, double my) {
+        if (navScale <= 0 || !isPointInNavBar(mx, my)) {
+            return false;
+        }
+        int localX = (int) ((mx - navBarX) / navScale);
+        int localY = (int) ((my - navBarY) / navScale);
+        for (Button btn : new Button[]{navFirstButton, navPrevButton, navNextButton, navLatestButton}) {
+            if (btn.active && localX >= btn.getX() && localX <= btn.getX() + btn.getWidth()
+                    && localY >= btn.getY() && localY <= btn.getY() + btn.getHeight()) {
+                btn.onPress();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean isPointInNavBar(double mx, double my) {
+        return navBarWidth > 0 && mx >= navBarX && mx <= navBarX + navBarWidth
+                && my >= navBarY && my <= navBarY + navBarHeight;
+    }
+
+    private String buildNavLabel() {
+        String version = displayedVersion != null ? displayedVersion : "";
+        String date = currentEntryDate();
+        return date != null ? version + " · " + date : version;
+    }
+
+    private String currentEntryDate() {
+        if (cachedHistory == null || historyIndex < 0 || historyIndex >= cachedHistory.size()) {
+            return null;
+        }
+        String iso = cachedHistory.get(historyIndex).fileDate;
+        if (iso == null) {
+            return null;
+        }
+        try {
+            return NAV_DATE_FORMAT.format(Instant.parse(iso).atZone(ZoneOffset.UTC));
+        } catch (Exception e) {
+            return null;
+        }
     }
     
     public void renderAsOverlay(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         graphics.pose().pushPose();
         graphics.pose().translate(0, 0, 1000);
-        
+
         int backdropAlpha = (int)(220 * Math.min(1.0f, panelOpenAnimation));
-        graphics.fill(0, 0, this.minecraft.getWindow().getGuiScaledWidth(), 
-                     this.minecraft.getWindow().getGuiScaledHeight(), 
+        graphics.fill(0, 0, this.minecraft.getWindow().getGuiScaledWidth(),
+                     this.minecraft.getWindow().getGuiScaledHeight(),
                      backdropAlpha << 24);
-        
+
         renderChangelogPanel(graphics, mouseX, mouseY, partialTick);
-        
+        renderNavBar(graphics);
+
         graphics.pose().popPose();
     }
     
@@ -539,12 +718,19 @@ public class ChangelogViewer extends Screen {
     }
     
     public boolean isClickOutsidePanel(double mouseX, double mouseY) {
+        if (isPointInNavBar(mouseX, mouseY)) {
+            return false;
+        }
         return mouseX < panelX || mouseX > panelX + panelWidth ||
                mouseY < panelY || mouseY > panelY + panelHeight;
     }
     
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (button == 0 && navClickAt(mouseX, mouseY)) {
+            return true;
+        }
+
         if (button == 0 && DevModeManager.shouldAllowDragging()) {
             if (mouseX >= panelX && mouseX <= panelX + panelWidth &&
                 mouseY >= panelY && mouseY <= panelY + 40) {

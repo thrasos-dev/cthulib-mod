@@ -106,11 +106,12 @@ public class ModsScreen extends Screen {
         if (!   cfg.wikiLink.isEmpty()) {
             int defaultWikiX = 6;
             int defaultWikiY = hasHeader ? 50 : 6;
+            boolean wikiPlaced = !Placements.WIKI.spec(cfg).legacy();
             int wikiX = defaultWikiX + cfg.wikiButtonX;
             int wikiY = defaultWikiY + cfg.wikiButtonY;
 
             if (! cfg.wikiLogo.isEmpty()) {
-                loadButtonLogoAsync(cfg.wikiLogo, wikiX, wikiY, cfg.wikiLink, "Wiki");
+                loadButtonLogoAsync(cfg.wikiLogo, wikiX, wikiY, cfg.wikiLink, "Wiki", wikiPlaced ? UIElementPositionManager.ElementType.WIKI_BUTTON : null);
             } else {
                 addRenderableWidget(Button.builder(Component.literal("📚 Wiki"),
                                 b -> Util.getPlatform().openUri(cfg.wikiLink))
@@ -121,11 +122,12 @@ public class ModsScreen extends Screen {
         if (! cfg.discordLink.isEmpty()) {
             int defaultDiscordX = width - 26;
             int defaultDiscordY = hasHeader ? 50 : 6;
+            boolean discordPlaced = !Placements.DISCORD.spec(cfg).legacy();
             int discordX = defaultDiscordX + cfg.discordButtonX;
             int discordY = defaultDiscordY + cfg.discordButtonY;
 
             if (!    cfg.discordLogo.isEmpty()) {
-                loadButtonLogoAsync(cfg.discordLogo, discordX, discordY, cfg.discordLink, "Discord");
+                loadButtonLogoAsync(cfg.discordLogo, discordX, discordY, cfg.discordLink, "Discord", discordPlaced ? UIElementPositionManager.ElementType.DISCORD_BUTTON : null);
             } else {
                 addRenderableWidget(Button.builder(Component.literal("💬 Discord"),
                                 b -> Util.getPlatform().openUri(cfg.discordLink))
@@ -136,7 +138,7 @@ public class ModsScreen extends Screen {
         detailPanel = new ModDetailPanel(this);
     }
 
-    private void loadButtonLogoAsync(String path, int x, int y, String link, String label) {
+    private void loadButtonLogoAsync(String path, int x, int y, String link, String label, UIElementPositionManager.ElementType placed) {
         CompletableFuture.supplyAsync(() -> {
             try {
                 ResourceLocation rl = ResourceLocation.parse(path);
@@ -174,10 +176,16 @@ public class ModsScreen extends Screen {
                     discordLogoTex = dt;
                 }
 
-                addRenderableWidget(new ModListButton(x, y, 20, 20,
+                UIElementPositionManager.ElementType kind = label.equals("Wiki") ? UIElementPositionManager.ElementType.WIKI_BUTTON
+                        : UIElementPositionManager.ElementType.DISCORD_BUTTON;
+                Placement.Spec size = kind.access().spec(CthuLibConfig.getInstance());
+                ModListButton linkButton = new ModListButton(x, y, size.width(), size.height(),
                         loc,
                         b -> Util.getPlatform().openUri(link),
-                        Component.literal(label)));
+                        Component.literal(label),
+                        placed);
+                linkButton.fancyMenuId(kind.fancyMenuId());
+                addRenderableWidget(linkButton);
             } else {
                 String emoji = label.equals("Wiki") ? "📚" : "💬";
                 addRenderableWidget(Button.builder(Component.literal(emoji + " " + label),

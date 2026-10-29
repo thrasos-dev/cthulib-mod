@@ -48,7 +48,7 @@ public abstract class OptionsScreenMixin extends Screen {
         }
 
         ModListButton button = new ModListButton(
-                x, y, 20, 20,
+                x, y, cfg.modlistButtonWidth, cfg.modlistButtonHeight,
                 buttonLocation,
                 b -> Minecraft.getInstance().setScreen(new ModsScreen(this)),
                 Component.literal(cfg.buttonTooltip),

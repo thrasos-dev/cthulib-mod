@@ -24,6 +24,17 @@ public class CthuLibConfig {
     public int buttonYtitleScreen = 0;
     public int buttonXsettings = 0;
     public int buttonYsettings = 0;
+    public boolean buttonTitleScreenStartFromCenterX = false;
+    public boolean buttonTitleScreenStartFromCenterY = false;
+    public boolean buttonTitleScreenStartFromLeftX = false;
+    public boolean buttonTitleScreenStartFromRightX = false;
+    public String buttonTitleScreenAnchor = "";
+    public boolean buttonSettingsUseAnchor = false;
+    public boolean buttonSettingsStartFromCenterX = false;
+    public boolean buttonSettingsStartFromCenterY = false;
+    public boolean buttonSettingsStartFromLeftX = false;
+    public boolean buttonSettingsStartFromRightX = false;
+    public String buttonSettingsAnchor = "";
     public int modlistButtonWidth = 20;
     public int modlistButtonHeight = 20;
     public float modlistButtonScale = 1.0f;
@@ -40,10 +51,34 @@ public class CthuLibConfig {
     public String wikiLogo = "cthulib:textures/gui/button_normal.png";
     public int wikiButtonX = 125;
     public int wikiButtonY = 0;
+    public int wikiButtonWidth = 20;
+    public int wikiButtonHeight = 20;
+    public float wikiButtonScale = 1.0f;
+    public boolean wikiButtonScaleWithScreen = false;
+    public float wikiButtonMinScale = 0.5f;
+    public float wikiButtonMaxScale = 1.5f;
+    public boolean wikiButtonUseAnchor = false;
+    public boolean wikiButtonStartFromCenterX = false;
+    public boolean wikiButtonStartFromCenterY = false;
+    public boolean wikiButtonStartFromLeftX = false;
+    public boolean wikiButtonStartFromRightX = false;
+    public String wikiButtonAnchor = "";
     public String discordLink = "https://discord.pixeldreamstudios.net/";
     public String discordLogo = "cthulib:textures/gui/button_discord.png";
     public int discordButtonX = -125;
     public int discordButtonY = 0;
+    public int discordButtonWidth = 20;
+    public int discordButtonHeight = 20;
+    public float discordButtonScale = 1.0f;
+    public boolean discordButtonScaleWithScreen = false;
+    public float discordButtonMinScale = 0.5f;
+    public float discordButtonMaxScale = 1.5f;
+    public boolean discordButtonUseAnchor = false;
+    public boolean discordButtonStartFromCenterX = false;
+    public boolean discordButtonStartFromCenterY = false;
+    public boolean discordButtonStartFromLeftX = false;
+    public boolean discordButtonStartFromRightX = false;
+    public String discordButtonAnchor = "";
     public boolean showPromoButton = false;
     public String promoButtonTexture = "cthulib:textures/gui/promo_button.png";
     public String promoButtonTooltip = "Special Offer!";
@@ -59,6 +94,7 @@ public class CthuLibConfig {
     public boolean promoButtonStartFromCenterY = false;
     public boolean promoButtonStartFromLeftX = false;
     public boolean promoButtonStartFromRightX = false;
+    public String promoButtonAnchor = "";
 
     public boolean showProjectSlider = true;
     public String sliderHeaderText = "Check our other projects!";
@@ -80,6 +116,7 @@ public class CthuLibConfig {
     public boolean sliderUseAnchor = false;
     public float sliderMinScale = 0.5f;
     public float sliderMaxScale = 1.5f;
+    public String sliderAnchor = "";
     public boolean sliderShowFilterButton = true;
     public int sliderFilterOffsetX = 0;
     public int sliderFilterOffsetY = 0;
@@ -103,6 +140,7 @@ public class CthuLibConfig {
     public boolean changelogButtonStartFromCenterY = false;
     public boolean changelogButtonStartFromLeftX = false;
     public boolean changelogButtonStartFromRightX = false;
+    public String changelogButtonAnchor = "";
     
     public int changelogPanelX = -1;
     public int changelogPanelY = -1;
@@ -110,6 +148,7 @@ public class CthuLibConfig {
     public int changelogPanelHeight = 400;
     public String changelogPanelTexture = "";
     public boolean showChangelogNotification = true;
+    public String changelogVersionPattern = "Fantasy MC [1.21.1]-{version} [BETA]";
     public int devModeKey1 = 80; // P key (GLFW_KEY_P)
     public int devModeKey2 = 68; // D key (GLFW_KEY_D)
     public int devModeKey3 = 83; // S key (GLFW_KEY_S)
@@ -160,7 +199,9 @@ public class CthuLibConfig {
 
                 String[] stringFields = {"wikiLink", "wikiLogo", "discordLink", "discordLogo", "logoPath", "name", "backgroundPath", "buttonTooltip",
                         "promoButtonTexture", "promoButtonTooltip", "promoButtonUrl", "changelogButtonTexture", "brightnessButtonTexture",
-                        "sliderDefaultFilter", "sliderArrowIdleColor", "sliderArrowHoverColor", "sliderBlacklistedProjects", "sliderUnmaintainedProjects"};
+                        "sliderDefaultFilter", "sliderArrowIdleColor", "sliderArrowHoverColor", "sliderBlacklistedProjects", "sliderUnmaintainedProjects",
+                        "changelogVersionPattern", "buttonTitleScreenAnchor", "buttonSettingsAnchor", "promoButtonAnchor", "sliderAnchor",
+                        "changelogButtonAnchor", "wikiButtonAnchor", "discordButtonAnchor"};
                 for (String field :  stringFields) {
                     if (! existingJson.has(field)) {
                         needsSave = true;
@@ -173,7 +214,8 @@ public class CthuLibConfig {
                         "promoButtonX", "promoButtonY", "promoButtonWidth", "promoButtonHeight",
                         "sliderX", "sliderY", "sliderCardWidth", "sliderCardHeight", "sliderPreviewOffset",
                         "sliderFilterOffsetX", "sliderFilterOffsetY",
-                        "changelogButtonX", "changelogButtonY", "changelogButtonWidth", "changelogButtonHeight"};
+                        "changelogButtonX", "changelogButtonY", "changelogButtonWidth", "changelogButtonHeight",
+                        "wikiButtonWidth", "wikiButtonHeight", "discordButtonWidth", "discordButtonHeight"};
                 for (String field : intFields) {
                     if (! existingJson.has(field)) {
                         needsSave = true;
@@ -185,7 +227,11 @@ public class CthuLibConfig {
                         "sliderShowFilterButton", "sliderEntryAnimationEnabled", "sliderCardTransitionEnabled",
                         "showChangelogButton", "changelogButtonScaleWithScreen", "changelogButtonUseAnchor", "changelogButtonStartFromCenterX", "changelogButtonStartFromCenterY", "changelogButtonStartFromLeftX", "changelogButtonStartFromRightX",
                         "showChangelogNotification", "animationsEnabled", "shineEffectEnabled",
-                        "modlistButtonScaleWithScreen", "modlistButtonUseAnchor", "showModlistButton"};
+                        "modlistButtonScaleWithScreen", "modlistButtonUseAnchor", "showModlistButton",
+                        "buttonTitleScreenStartFromCenterX", "buttonTitleScreenStartFromCenterY", "buttonTitleScreenStartFromLeftX", "buttonTitleScreenStartFromRightX",
+                        "buttonSettingsUseAnchor", "buttonSettingsStartFromCenterX", "buttonSettingsStartFromCenterY", "buttonSettingsStartFromLeftX", "buttonSettingsStartFromRightX",
+                        "wikiButtonScaleWithScreen", "wikiButtonUseAnchor", "wikiButtonStartFromCenterX", "wikiButtonStartFromCenterY", "wikiButtonStartFromLeftX", "wikiButtonStartFromRightX",
+                        "discordButtonScaleWithScreen", "discordButtonUseAnchor", "discordButtonStartFromCenterX", "discordButtonStartFromCenterY", "discordButtonStartFromLeftX", "discordButtonStartFromRightX"};
                 for (String field : boolFields) {
                     if (! existingJson.has(field)) {
                         needsSave = true;
@@ -197,7 +243,8 @@ public class CthuLibConfig {
                         "changelogButtonMinScale", "changelogButtonMaxScale",
                         "hoverAnimationSpeed", "pressAnimationSpeed", "pulseAnimationSpeed", "shineAnimationSpeed",
                         "promoButtonScale", "changelogButtonScale",
-                        "modlistButtonScale", "modlistButtonMinScale", "modlistButtonMaxScale"};
+                        "modlistButtonScale", "modlistButtonMinScale", "modlistButtonMaxScale",
+                        "wikiButtonScale", "wikiButtonMinScale", "wikiButtonMaxScale", "discordButtonScale", "discordButtonMinScale", "discordButtonMaxScale"};
                 for (String field : floatFields) {
                     if (! existingJson.has(field)) {
                         needsSave = true;
@@ -339,6 +386,7 @@ public class CthuLibConfig {
         config.changelogPanelHeight = 400;
         config.changelogPanelTexture = "";
         config.showChangelogNotification = true;
+        config.changelogVersionPattern = "Fantasy MC [1.21.1]-{version} [BETA]";
 
         config.devModeKey1 = 80; // P key
         config.devModeKey2 = 68; // D key
@@ -380,8 +428,56 @@ public class CthuLibConfig {
         this.modlistButtonScaleWithScreen = defaults.modlistButtonScaleWithScreen;
         this.modlistButtonMinScale = defaults.modlistButtonMinScale;
         this.modlistButtonMaxScale = defaults.modlistButtonMaxScale;
+        this.modlistButtonUseAnchor = defaults.modlistButtonUseAnchor;
+        this.buttonXtitleScreen = defaults.buttonXtitleScreen;
+        this.buttonYtitleScreen = defaults.buttonYtitleScreen;
+        this.buttonXsettings = defaults.buttonXsettings;
+        this.buttonYsettings = defaults.buttonYsettings;
+        this.buttonTitleScreenStartFromCenterX = defaults.buttonTitleScreenStartFromCenterX;
+        this.buttonTitleScreenStartFromCenterY = defaults.buttonTitleScreenStartFromCenterY;
+        this.buttonTitleScreenStartFromLeftX = defaults.buttonTitleScreenStartFromLeftX;
+        this.buttonTitleScreenStartFromRightX = defaults.buttonTitleScreenStartFromRightX;
+        this.buttonTitleScreenAnchor = defaults.buttonTitleScreenAnchor;
+        this.buttonSettingsUseAnchor = defaults.buttonSettingsUseAnchor;
+        this.buttonSettingsStartFromCenterX = defaults.buttonSettingsStartFromCenterX;
+        this.buttonSettingsStartFromCenterY = defaults.buttonSettingsStartFromCenterY;
+        this.buttonSettingsStartFromLeftX = defaults.buttonSettingsStartFromLeftX;
+        this.buttonSettingsStartFromRightX = defaults.buttonSettingsStartFromRightX;
+        this.buttonSettingsAnchor = defaults.buttonSettingsAnchor;
     }
     
+    public void resetModsScreenButtons() {
+        CthuLibConfig defaults = createDefault();
+        this.wikiButtonX = defaults.wikiButtonX;
+        this.wikiButtonY = defaults.wikiButtonY;
+        this.wikiButtonWidth = defaults.wikiButtonWidth;
+        this.wikiButtonHeight = defaults.wikiButtonHeight;
+        this.wikiButtonScale = defaults.wikiButtonScale;
+        this.wikiButtonScaleWithScreen = defaults.wikiButtonScaleWithScreen;
+        this.wikiButtonMinScale = defaults.wikiButtonMinScale;
+        this.wikiButtonMaxScale = defaults.wikiButtonMaxScale;
+        this.wikiButtonUseAnchor = defaults.wikiButtonUseAnchor;
+        this.wikiButtonStartFromCenterX = defaults.wikiButtonStartFromCenterX;
+        this.wikiButtonStartFromCenterY = defaults.wikiButtonStartFromCenterY;
+        this.wikiButtonStartFromLeftX = defaults.wikiButtonStartFromLeftX;
+        this.wikiButtonStartFromRightX = defaults.wikiButtonStartFromRightX;
+        this.wikiButtonAnchor = defaults.wikiButtonAnchor;
+        this.discordButtonX = defaults.discordButtonX;
+        this.discordButtonY = defaults.discordButtonY;
+        this.discordButtonWidth = defaults.discordButtonWidth;
+        this.discordButtonHeight = defaults.discordButtonHeight;
+        this.discordButtonScale = defaults.discordButtonScale;
+        this.discordButtonScaleWithScreen = defaults.discordButtonScaleWithScreen;
+        this.discordButtonMinScale = defaults.discordButtonMinScale;
+        this.discordButtonMaxScale = defaults.discordButtonMaxScale;
+        this.discordButtonUseAnchor = defaults.discordButtonUseAnchor;
+        this.discordButtonStartFromCenterX = defaults.discordButtonStartFromCenterX;
+        this.discordButtonStartFromCenterY = defaults.discordButtonStartFromCenterY;
+        this.discordButtonStartFromLeftX = defaults.discordButtonStartFromLeftX;
+        this.discordButtonStartFromRightX = defaults.discordButtonStartFromRightX;
+        this.discordButtonAnchor = defaults.discordButtonAnchor;
+    }
+
     public void resetPromoButton() {
         CthuLibConfig defaults = createDefault();
         this.showPromoButton = defaults.showPromoButton;
@@ -399,6 +495,9 @@ public class CthuLibConfig {
         this.promoButtonStartFromCenterY = defaults.promoButtonStartFromCenterY;
         this.promoButtonStartFromLeftX = defaults.promoButtonStartFromLeftX;
         this.promoButtonStartFromRightX = defaults.promoButtonStartFromRightX;
+        this.promoButtonScale = defaults.promoButtonScale;
+        this.promoButtonUseAnchor = defaults.promoButtonUseAnchor;
+        this.promoButtonAnchor = defaults.promoButtonAnchor;
     }
     
     public void resetProjectSlider() {
@@ -430,6 +529,8 @@ public class CthuLibConfig {
         this.sliderArrowHoverColor = defaults.sliderArrowHoverColor;
         this.sliderBlacklistedProjects = defaults.sliderBlacklistedProjects;
         this.sliderUnmaintainedProjects = defaults.sliderUnmaintainedProjects;
+        this.sliderUseAnchor = defaults.sliderUseAnchor;
+        this.sliderAnchor = defaults.sliderAnchor;
     }
     
     public void resetChangelog() {
@@ -447,10 +548,14 @@ public class CthuLibConfig {
         this.changelogButtonStartFromCenterY = defaults.changelogButtonStartFromCenterY;
         this.changelogButtonStartFromLeftX = defaults.changelogButtonStartFromLeftX;
         this.changelogButtonStartFromRightX = defaults.changelogButtonStartFromRightX;
+        this.changelogButtonScale = defaults.changelogButtonScale;
+        this.changelogButtonUseAnchor = defaults.changelogButtonUseAnchor;
+        this.changelogButtonAnchor = defaults.changelogButtonAnchor;
         this.changelogPanelWidth = defaults.changelogPanelWidth;
         this.changelogPanelHeight = defaults.changelogPanelHeight;
         this.changelogPanelTexture = defaults.changelogPanelTexture;
         this.showChangelogNotification = defaults.showChangelogNotification;
+        this.changelogVersionPattern = defaults.changelogVersionPattern;
     }
 
     public void save() {

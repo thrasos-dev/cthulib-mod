@@ -62,28 +62,7 @@ public class QuickConfigPanel {
         
         switch (widgetType) {
             case "Promo Button":
-                addIntSlider("X", cfg.promoButtonX, -1000, 1000, val -> cfg.promoButtonX = val, x, yPos);
-                yPos += entryHeight;
-                addIntSlider("Y", cfg.promoButtonY, -1000, 1000, val -> cfg.promoButtonY = val, x, yPos);
-                yPos += entryHeight;
-                addIntSlider("Width", cfg.promoButtonWidth, 20, 400, val -> {
-                    cfg.promoButtonWidth = val;
-                }, x, yPos);
-                yPos += entryHeight;
-                addIntSlider("Height", cfg.promoButtonHeight, 10, 200, val -> {
-                    cfg.promoButtonHeight = val;
-                }, x, yPos);
-                yPos += entryHeight;
-                addFloatSlider("Scale", cfg.promoButtonScale, 0.1f, 3.0f, val -> cfg.promoButtonScale = val, x, yPos);
-                yPos += entryHeight;
-                addCheckbox("Scale with Screen", cfg.promoButtonScaleWithScreen, val -> cfg.promoButtonScaleWithScreen = val, x, yPos);
-                yPos += entryHeight;
-                addCheckbox("Use Anchor (GUI-pixel offset)", cfg.promoButtonUseAnchor, val -> cfg.promoButtonUseAnchor = val, x, yPos);
-                yPos += entryHeight;
-                addCheckbox("Start From Center X", cfg.promoButtonStartFromCenterX, val -> cfg.promoButtonStartFromCenterX = val, x, yPos);
-                yPos += entryHeight;
-                addCheckbox("Start From Center Y", cfg.promoButtonStartFromCenterY, val -> cfg.promoButtonStartFromCenterY = val, x, yPos);
-                yPos += entryHeight;
+                yPos = addPlacement(Placements.PROMO, x, yPos, entryHeight);
                 addLabel("\u2500\u2500 Animations \u2500\u2500", x, yPos);
                 yPos += labelHeight;
                 addCheckbox("Animations Enabled", cfg.animationsEnabled, val -> cfg.animationsEnabled = val, x, yPos);
@@ -101,33 +80,7 @@ public class QuickConfigPanel {
                 break;
                 
             case "Project Slider":
-                addIntSlider("X", cfg.sliderX, -2000, 2000, val -> cfg.sliderX = val, x, yPos);
-                yPos += entryHeight;
-                addIntSlider("Y", cfg.sliderY, -1000, 1000, val -> cfg.sliderY = val, x, yPos);
-                yPos += entryHeight;
-                addIntSlider("Card Width", cfg.sliderCardWidth, 100, 600, val -> {
-                    cfg.sliderCardWidth = val;
-                    scheduleRebuild();
-                }, x, yPos);
-                yPos += entryHeight;
-                addIntSlider("Card Height", cfg.sliderCardHeight, 40, 300, val -> {
-                    cfg.sliderCardHeight = val;
-                    scheduleRebuild();
-                }, x, yPos);
-                yPos += entryHeight;
-                addFloatSlider("Scale", cfg.sliderScale, 0.3f, 2.0f, val -> {
-                    cfg.sliderScale = val;
-                    scheduleRebuild();
-                }, x, yPos);
-                yPos += entryHeight;
-                addCheckbox("Scale with Screen", cfg.sliderScaleWithScreen, val -> cfg.sliderScaleWithScreen = val, x, yPos);
-                yPos += entryHeight;
-                addCheckbox("Use Anchor (GUI-pixel offset)", cfg.sliderUseAnchor, val -> cfg.sliderUseAnchor = val, x, yPos);
-                yPos += entryHeight;
-                addCheckbox("Start From Center X", cfg.sliderStartFromCenterX, val -> cfg.sliderStartFromCenterX = val, x, yPos);
-                yPos += entryHeight;
-                addCheckbox("Start From Center Y", cfg.sliderStartFromCenterY, val -> cfg.sliderStartFromCenterY = val, x, yPos);
-                yPos += entryHeight;
+                yPos = addPlacement(Placements.SLIDER, x, yPos, entryHeight);
                 addCheckbox("Show Filter Button", cfg.sliderShowFilterButton, val -> cfg.sliderShowFilterButton = val, x, yPos);
                 yPos += entryHeight;
                 addIntSlider("Filter Btn Offset X", cfg.sliderFilterOffsetX, -200, 200, val -> cfg.sliderFilterOffsetX = val, x, yPos);
@@ -167,28 +120,7 @@ public class QuickConfigPanel {
                 break;
                 
             case "Changelog Button":
-                addIntSlider("X", cfg.changelogButtonX, -1000, 1000, val -> cfg.changelogButtonX = val, x, yPos);
-                yPos += entryHeight;
-                addIntSlider("Y", cfg.changelogButtonY, -1000, 1000, val -> cfg.changelogButtonY = val, x, yPos);
-                yPos += entryHeight;
-                addIntSlider("Width", cfg.changelogButtonWidth, 50, 300, val -> {
-                    cfg.changelogButtonWidth = val;
-                }, x, yPos);
-                yPos += entryHeight;
-                addIntSlider("Height", cfg.changelogButtonHeight, 10, 100, val -> {
-                    cfg.changelogButtonHeight = val;
-                }, x, yPos);
-                yPos += entryHeight;
-                addFloatSlider("Scale", cfg.changelogButtonScale, 0.1f, 3.0f, val -> cfg.changelogButtonScale = val, x, yPos);
-                yPos += entryHeight;
-                addCheckbox("Scale with Screen", cfg.changelogButtonScaleWithScreen, val -> cfg.changelogButtonScaleWithScreen = val, x, yPos);
-                yPos += entryHeight;
-                addCheckbox("Use Anchor (GUI-pixel offset)", cfg.changelogButtonUseAnchor, val -> cfg.changelogButtonUseAnchor = val, x, yPos);
-                yPos += entryHeight;
-                addCheckbox("Start From Center X", cfg.changelogButtonStartFromCenterX, val -> cfg.changelogButtonStartFromCenterX = val, x, yPos);
-                yPos += entryHeight;
-                addCheckbox("Start From Center Y", cfg.changelogButtonStartFromCenterY, val -> cfg.changelogButtonStartFromCenterY = val, x, yPos);
-                yPos += entryHeight;
+                yPos = addPlacement(Placements.CHANGELOG, x, yPos, entryHeight);
                 addLabel("\u2500\u2500 Animations \u2500\u2500", x, yPos);
                 yPos += labelHeight;
                 addCheckbox("Animations Enabled", cfg.animationsEnabled, val -> cfg.animationsEnabled = val, x, yPos);
@@ -206,20 +138,7 @@ public class QuickConfigPanel {
                 break;
 
             case "Modlist Button":
-                addIntSlider("X", cfg.buttonXtitleScreen, -2000, 2000, val -> cfg.buttonXtitleScreen = val, x, yPos);
-                yPos += entryHeight;
-                addIntSlider("Y", cfg.buttonYtitleScreen, -2000, 2000, val -> cfg.buttonYtitleScreen = val, x, yPos);
-                yPos += entryHeight;
-                addIntSlider("Width", cfg.modlistButtonWidth, 10, 100, val -> cfg.modlistButtonWidth = val, x, yPos);
-                yPos += entryHeight;
-                addIntSlider("Height", cfg.modlistButtonHeight, 10, 100, val -> cfg.modlistButtonHeight = val, x, yPos);
-                yPos += entryHeight;
-                addFloatSlider("Scale", cfg.modlistButtonScale, 0.3f, 3.0f, val -> cfg.modlistButtonScale = val, x, yPos);
-                yPos += entryHeight;
-                addCheckbox("Scale with Screen", cfg.modlistButtonScaleWithScreen, val -> cfg.modlistButtonScaleWithScreen = val, x, yPos);
-                yPos += entryHeight;
-                addCheckbox("Use Anchor (GUI-pixel offset)", cfg.modlistButtonUseAnchor, val -> cfg.modlistButtonUseAnchor = val, x, yPos);
-                yPos += entryHeight;
+                yPos = addPlacement(Placements.MODLIST_TITLE, x, yPos, entryHeight);
                 addLabel("── Animations ──", x, yPos);
                 yPos += labelHeight;
                 addCheckbox("Animations Enabled", cfg.animationsEnabled, val -> cfg.animationsEnabled = val, x, yPos);
@@ -232,6 +151,47 @@ public class QuickConfigPanel {
         }
         
         contentHeight = yPos - panelY + 10;
+    }
+
+    private int addPlacement(Placement.Access access, int x, int y, int entryHeight) {
+        CthuLibConfig cfg = CthuLibConfig.getInstance();
+        addIntSlider("X", access.x().get().applyAsInt(cfg), -2000, 2000, val -> access.x().set().accept(cfg, val), x, y);
+        y += entryHeight;
+        addIntSlider("Y", access.y().get().applyAsInt(cfg), -2000, 2000, val -> access.y().set().accept(cfg, val), x, y);
+        y += entryHeight;
+        addIntSlider("Width", access.width().get().applyAsInt(cfg), 10, 600, val -> {
+            access.width().set().accept(cfg, val);
+            scheduleRebuild();
+        }, x, y);
+        y += entryHeight;
+        addIntSlider("Height", access.height().get().applyAsInt(cfg), 10, 300, val -> {
+            access.height().set().accept(cfg, val);
+            scheduleRebuild();
+        }, x, y);
+        y += entryHeight;
+        addFloatSlider("Scale", access.scale().get().get(cfg), 0.1f, 3.0f, val -> {
+            access.scale().set().set(cfg, val);
+            scheduleRebuild();
+        }, x, y);
+        y += entryHeight;
+        addCheckbox("Scale with Screen", access.scaleWithScreen().get().test(cfg), val -> access.scaleWithScreen().set().accept(cfg, val), x, y);
+        y += entryHeight;
+        addFloatSlider("Min Scale", access.minScale().get().get(cfg), 0.1f, 2.0f, val -> access.minScale().set().set(cfg, val), x, y);
+        y += entryHeight;
+        addFloatSlider("Max Scale", access.maxScale().get().get(cfg), 0.1f, 3.0f, val -> access.maxScale().set().set(cfg, val), x, y);
+        y += entryHeight;
+        addCheckbox("Use Anchor (GUI-pixel offset)", access.useAnchor().get().test(cfg), val -> access.useAnchor().set().accept(cfg, val), x, y);
+        y += entryHeight;
+        addCheckbox("Start From Center X", access.centerX().get().test(cfg), val -> access.centerX().set().accept(cfg, val), x, y);
+        y += entryHeight;
+        addCheckbox("Start From Center Y", access.centerY().get().test(cfg), val -> access.centerY().set().accept(cfg, val), x, y);
+        y += entryHeight;
+        addCheckbox("Start From Left X", access.leftX().get().test(cfg), val -> access.leftX().set().accept(cfg, val), x, y);
+        y += entryHeight;
+        addCheckbox("Start From Right X", access.rightX().get().test(cfg), val -> access.rightX().set().accept(cfg, val), x, y);
+        y += entryHeight;
+        addTextField("Anchor", Placement.ANCHOR_HINT, access.anchor().get().apply(cfg), val -> access.anchor().set().accept(cfg, val), x, y);
+        return y + entryHeight;
     }
 
     private void scheduleRebuild() {

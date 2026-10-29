@@ -1,5 +1,6 @@
 package net.pixeldreamstudios.cthulib.mixin.client;
 
+import java.util.Optional;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -13,6 +14,7 @@ import net.pixeldreamstudios.cthulib.client.ChangelogButton;
 import net.pixeldreamstudios.cthulib.client.ChangelogViewer;
 import net.pixeldreamstudios.cthulib.client.DevModeManager;
 import net.pixeldreamstudios.cthulib.client.ModsScreen;
+import net.pixeldreamstudios.cthulib.client.Placement;
 import net.pixeldreamstudios.cthulib.client.ProjectSlider;
 import net.pixeldreamstudios.cthulib.client.PromoButton;
 import net.pixeldreamstudios.cthulib.client.QuickConfigPanel;
@@ -182,8 +184,12 @@ public abstract class TitleScreenMixin extends Screen {
                 int sliderWidth = (int)(cfg.sliderCardWidth * responsiveScale);
                 int fullSliderWidth = sliderWidth + (int)(100 * responsiveScale);
 
+                Optional<Placement.Origin> sliderOrigin = Placement.origin(cfg.sliderAnchor, this.width, this.height,
+                        UIElementPositionManager.ElementType.PROJECT_SLIDER.fancyMenuId());
                 int sliderX;
-                if (cfg.sliderUseAnchor) {
+                if (sliderOrigin.isPresent()) {
+                    sliderX = sliderOrigin.get().x() + cfg.sliderX;
+                } else if (cfg.sliderUseAnchor) {
                     sliderX = (this.width / 2) - (fullSliderWidth / 2) + cfg.sliderX;
                 } else if (cfg.sliderStartFromCenterX) {
                     sliderX = (this.width / 2) - (sliderWidth / 2) + (int)(cfg.sliderX * responsiveScale);
@@ -197,7 +203,9 @@ public abstract class TitleScreenMixin extends Screen {
                 }
 
                 int sliderY;
-                if (cfg.sliderUseAnchor) {
+                if (sliderOrigin.isPresent()) {
+                    sliderY = sliderOrigin.get().y() + cfg.sliderY;
+                } else if (cfg.sliderUseAnchor) {
                     sliderY = this.height / 4 + 48 + cfg.sliderY;
                 } else if (cfg.sliderScaleWithScreen) {
                     sliderY = cfg.sliderY < 0 ? this.height + (int)(cfg.sliderY * responsiveScale) : (int)(cfg.sliderY * responsiveScale);
@@ -258,8 +266,12 @@ public abstract class TitleScreenMixin extends Screen {
 
         int sliderWidth = (int)(cfg.sliderCardWidth * responsiveScale);
         int fullSliderWidth = sliderWidth + (int)(100 * responsiveScale);
+        Optional<Placement.Origin> sliderOrigin = Placement.origin(cfg.sliderAnchor, this.width, this.height,
+                UIElementPositionManager.ElementType.PROJECT_SLIDER.fancyMenuId());
         int sliderX;
-        if (cfg.sliderUseAnchor) {
+        if (sliderOrigin.isPresent()) {
+            sliderX = sliderOrigin.get().x() + cfg.sliderX;
+        } else if (cfg.sliderUseAnchor) {
             sliderX = (this.width / 2) - (fullSliderWidth / 2) + cfg.sliderX;
         } else if (cfg.sliderStartFromCenterX) {
             sliderX = (this.width / 2) - (sliderWidth / 2) + (int)(cfg.sliderX * responsiveScale);
@@ -272,7 +284,9 @@ public abstract class TitleScreenMixin extends Screen {
             sliderX = cfg.sliderX < 0 ? this.width + scaledX : scaledX;
         }
         int sliderY;
-        if (cfg.sliderUseAnchor) {
+        if (sliderOrigin.isPresent()) {
+            sliderY = sliderOrigin.get().y() + cfg.sliderY;
+        } else if (cfg.sliderUseAnchor) {
             sliderY = this.height / 4 + 48 + cfg.sliderY;
         } else if (cfg.sliderScaleWithScreen) {
             sliderY = cfg.sliderY < 0 ? this.height + (int)(cfg.sliderY * responsiveScale) : (int)(cfg.sliderY * responsiveScale);

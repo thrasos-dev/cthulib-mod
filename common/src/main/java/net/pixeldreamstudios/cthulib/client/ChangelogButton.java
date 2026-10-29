@@ -33,23 +33,7 @@ public class ChangelogButton extends DraggableTitleScreenWidget {
     }
     
     private void updatePosition() {
-        CthuLibConfig config = CthuLibConfig.getInstance();
-        int scaledW = (int)(config.changelogButtonWidth * config.changelogButtonScale);
-        int scaledH = (int)(config.changelogButtonHeight * config.changelogButtonScale);
-        UIElementPositionManager.PositionInfo pos = 
-            UIElementPositionManager.calculateAdvancedPosition(
-                UIElementPositionManager.ElementType.CHANGELOG_BUTTON,
-                scaledW, scaledH,
-                config.changelogButtonScaleWithScreen,
-                config.changelogButtonMinScale,
-                config.changelogButtonMaxScale,
-                config.changelogButtonStartFromCenterX,
-                config.changelogButtonStartFromCenterY,
-                config.changelogButtonStartFromLeftX,
-                config.changelogButtonStartFromRightX,
-                config.changelogButtonUseAnchor
-            );
-        
+        UIElementPositionManager.PositionInfo pos = UIElementPositionManager.place(UIElementPositionManager.ElementType.CHANGELOG_BUTTON);
         this.width = pos.width;
         this.height = pos.height;
         this.setX(pos.x);
@@ -214,22 +198,7 @@ public class ChangelogButton extends DraggableTitleScreenWidget {
     @Override
     public boolean mouseReleased(double mouseX, double mouseY, int button) {
         if (isDragging()) {
-            CthuLibConfig config = CthuLibConfig.getInstance();
-            int scaledW = (int)(config.changelogButtonWidth * config.changelogButtonScale);
-            int scaledH = (int)(config.changelogButtonHeight * config.changelogButtonScale);
-            UIElementPositionManager.endDragAdvanced(
-                UIElementPositionManager.ElementType.CHANGELOG_BUTTON,
-                "Changelog Button",
-                scaledW, scaledH,
-                config.changelogButtonScaleWithScreen,
-                config.changelogButtonMinScale,
-                config.changelogButtonMaxScale,
-                config.changelogButtonStartFromCenterX,
-                config.changelogButtonStartFromCenterY,
-                config.changelogButtonStartFromLeftX,
-                config.changelogButtonStartFromRightX,
-                config.changelogButtonUseAnchor
-            );
+            UIElementPositionManager.finishDrag(UIElementPositionManager.ElementType.CHANGELOG_BUTTON, "Changelog Button");
             return true;
         }
         return super.mouseReleased(mouseX, mouseY, button);

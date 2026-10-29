@@ -5,11 +5,13 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.pixeldreamstudios.cthulib.client.DataPreloader;
 import net.pixeldreamstudios.cthulib.client.ModCollector;
 import net.pixeldreamstudios.cthulib.config.PromoMessageConfig;
+import net.pixeldreamstudios.cthulib.util.ChangelogCache;
 import net.pixeldreamstudios.cthulib.util.client.PromoMessageHandler;
 
 public final class CthuLibFabricClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
+        ChangelogCache.setUsesTomlConfig(false);
         ModCollectorFabric.init();
         ModIconLoaderFabric.init();
         ModCollector.preloadModData();

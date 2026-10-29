@@ -11,6 +11,7 @@ import net.pixeldreamstudios.cthulib.config.CthuLibConfig;
 public abstract class DraggableTitleScreenWidget extends AbstractWidget {
     
     protected final UIElementPositionManager.ElementType elementType;
+    private String fancyMenuId;
     protected float hoverAnimation = 0.0f;
     protected float pressAnimation = 0.0f;
     protected float pulseAnimation = 0.0f;
@@ -19,6 +20,7 @@ public abstract class DraggableTitleScreenWidget extends AbstractWidget {
                                         UIElementPositionManager.ElementType elementType) {
         super(x, y, width, height, message);
         this.elementType = elementType;
+        this.fancyMenuId = elementType == null ? null : elementType.fancyMenuId();
     }
     protected boolean isDragging() {
         return elementType != null && UIElementPositionManager.isDragging(elementType);
@@ -95,6 +97,15 @@ public abstract class DraggableTitleScreenWidget extends AbstractWidget {
     protected void onDragUpdate() {
     }
     protected abstract String getWidgetName();
+
+    public DraggableTitleScreenWidget fancyMenuId(String id) {
+        this.fancyMenuId = id;
+        return this;
+    }
+
+    public String getWidgetIdentifierFancyMenu() {
+        return fancyMenuId;
+    }
     @Override
     protected void updateWidgetNarration(NarrationElementOutput output) {
         this.defaultButtonNarrationText(output);

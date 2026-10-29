@@ -10,6 +10,7 @@ import net.pixeldreamstudios.cthulib.client.CthuLibConfigScreen;
 import net.pixeldreamstudios.cthulib.client.DataPreloader;
 import net.pixeldreamstudios.cthulib.client.ModCollector;
 import net.pixeldreamstudios.cthulib.config.PromoMessageConfig;
+import net.pixeldreamstudios.cthulib.util.ChangelogCache;
 
 @Mod(CthuLib.MOD_ID)
 public final class CthulibNeoForge {
@@ -17,6 +18,7 @@ public final class CthulibNeoForge {
         CthuLib.init();
 
         if (FMLEnvironment.dist == Dist.CLIENT) {
+            ChangelogCache.setUsesTomlConfig(true);
             ModCollectorNeoForge.init();
             ModIconLoaderNeoForge.init();
             ModCollector.preloadModData();

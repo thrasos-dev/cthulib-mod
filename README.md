@@ -55,6 +55,38 @@ Main configuration file for CthuLib's mod screen and UI customization.
 | `discordButtonX` | integer | `-125` | X offset for discord button position |
 | `discordButtonY` | integer | `0` | Y offset for discord button position |
 
+### Placement (every button)
+
+Every placeable element has the same set of options. Replace `<prefix>` with the element's prefix:
+
+| Element | Prefix | Position fields |
+|---------|--------|-----------------|
+| Mod list button (title screen) | `buttonTitleScreen` | `buttonXtitleScreen`, `buttonYtitleScreen` |
+| Mod list button (settings) | `buttonSettings` | `buttonXsettings`, `buttonYsettings` |
+| Promo button | `promoButton` | `promoButtonX`, `promoButtonY` |
+| Changelog button | `changelogButton` | `changelogButtonX`, `changelogButtonY` |
+| Project slider | `slider` | `sliderX`, `sliderY` |
+| Wiki button (mods screen) | `wikiButton` | `wikiButtonX`, `wikiButtonY` |
+| Discord button (mods screen) | `discordButton` | `discordButtonX`, `discordButtonY` |
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `<prefix>StartFromCenterX` / `CenterY` / `LeftX` / `RightX` | boolean | Measure the offset from the screen center or edge |
+| `<prefix>UseAnchor` | boolean | Classic anchor: centered horizontally, below the title screen logo |
+| `<prefix>Anchor` | string | FancyMenu-style anchor, see below. Overrides the flags above when set |
+
+Both mod list buttons share `modlistButtonWidth`, `modlistButtonHeight`, `modlistButtonScale`, `modlistButtonScaleWithScreen`, `modlistButtonMinScale`, `modlistButtonMaxScale`. The other elements have their own `Width`, `Height`, `Scale`, `ScaleWithScreen`, `MinScale` and `MaxScale` (the slider uses `sliderCardWidth`, `sliderCardHeight` and `sliderScale`).
+
+#### Anchors
+
+* `top-left`, `top-centered`, `top-right`, `mid-left`, `mid-centered`, `mid-right`, `bottom-left`, `bottom-centered`, `bottom-right`: the position is the anchor point plus the X/Y offset, the same way FancyMenu places elements, so offsets can be copied from a FancyMenu layout.
+* `element:<target>`: anchors to another button on the same screen. `<target>` is a button's translation key (`menu.singleplayer`, `menu.options`), its visible text, or another CthuLib element id (`cthulib_promo_button`). Add `@<anchor>` to pick the corner of the target, for example `element:menu.singleplayer@top-right`. The element follows the target when FancyMenu moves it.
+* Leave empty (or `none`) for the old behaviour.
+
+#### FancyMenu element ids
+
+CthuLib buttons report fixed ids to FancyMenu, so moving them no longer changes their FancyMenu element id: `cthulib_brightness_button_title`, `cthulib_brightness_button_settings`, `cthulib_promo_button`, `cthulib_changelog_button`, `cthulib_project_slider`, `cthulib_wiki_button`, `cthulib_discord_button`.
+
 ### Example Configuration
 
 ```json

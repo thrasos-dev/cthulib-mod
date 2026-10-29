@@ -1,6 +1,7 @@
 package net.pixeldreamstudios.cthulib.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import java.util.Optional;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -105,8 +106,12 @@ public class ProjectSlider extends DraggableTitleScreenWidget {
             int sliderWidthCalc = (int)(cfg.sliderCardWidth * responsiveScale);
 
             boolean useAnchor = cfg.sliderUseAnchor;
+            Optional<Placement.Origin> origin = Placement.origin(cfg.sliderAnchor, screenWidth, screenHeight,
+                    UIElementPositionManager.ElementType.PROJECT_SLIDER.fancyMenuId());
             int newX;
-            if (useAnchor) {
+            if (origin.isPresent()) {
+                newX = origin.get().x() + cfg.sliderX;
+            } else if (useAnchor) {
                 newX = (screenWidth / 2) - (this.width / 2) + cfg.sliderX;
             } else if (cfg.sliderStartFromCenterX) {
                 newX = (screenWidth / 2) - (sliderWidthCalc / 2) + (int)(cfg.sliderX * responsiveScale);
@@ -120,7 +125,9 @@ public class ProjectSlider extends DraggableTitleScreenWidget {
             }
 
             int newY;
-            if (useAnchor) {
+            if (origin.isPresent()) {
+                newY = origin.get().y() + cfg.sliderY;
+            } else if (useAnchor) {
                 newY = screenHeight / 4 + 48 + cfg.sliderY;
             } else if (cfg.sliderScaleWithScreen) {
                 newY = cfg.sliderY < 0 ? screenHeight + (int)(cfg.sliderY * responsiveScale) : (int)(cfg.sliderY * responsiveScale);
@@ -176,8 +183,12 @@ public class ProjectSlider extends DraggableTitleScreenWidget {
 
             boolean useAnchor = cfg.sliderUseAnchor;
             float rs = responsiveScale > 0 ? responsiveScale : 1f;
+            Optional<Placement.Origin> origin = Placement.origin(cfg.sliderAnchor, screenWidth, screenHeight,
+                    UIElementPositionManager.ElementType.PROJECT_SLIDER.fancyMenuId());
             int configX;
-            if (useAnchor) {
+            if (origin.isPresent()) {
+                configX = screenX - origin.get().x();
+            } else if (useAnchor) {
                 configX = screenX - (screenWidth / 2) + (this.width / 2);
             } else if (cfg.sliderStartFromCenterX) {
                 int halfCard = (int)(cfg.sliderCardWidth * responsiveScale / 2);
@@ -199,7 +210,9 @@ public class ProjectSlider extends DraggableTitleScreenWidget {
             }
 
             int configY;
-            if (useAnchor) {
+            if (origin.isPresent()) {
+                configY = screenY - origin.get().y();
+            } else if (useAnchor) {
                 configY = screenY - (screenHeight / 4) - 48;
             } else if (cfg.sliderScaleWithScreen) {
                 configY = screenY > screenHeight / 2 ? (int)((screenY - screenHeight) / rs) : (int)(screenY / rs);

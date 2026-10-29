@@ -31,6 +31,7 @@ public class CthuLibConfigScreen extends Screen {
     private final int closeButtonY = 6;
     private static final int CLOSE_BUTTON_SIZE = 16;
     private static final int ENTRY_HEIGHT = 26;
+    private static final int SECTION_HEADER_HEIGHT = 14;
     private static final int NAV_BUTTON_WIDTH = 90;
     private static final int NAV_BUTTON_HEIGHT = 18;
     private static final int NAV_PADDING = 4;
@@ -64,6 +65,7 @@ public class CthuLibConfigScreen extends Screen {
         yPos += 10;
 
         addSection("General", yPos);
+        yPos += SECTION_HEADER_HEIGHT;
         addCheckbox("Show in Title Screen", config.showInTitleScreen, val -> config.showInTitleScreen = val, leftX, yPos);
         addResetButton("Reset General", yPos, () -> {
             config.resetGeneralSettings();
@@ -86,7 +88,20 @@ public class CthuLibConfigScreen extends Screen {
         addTextField("Discord Button Texture", "e.g., cthulib:textures/gui/button_discord.png", config.discordLogo, val -> config.discordLogo = val, leftX, yPos);
 
         yPos += ENTRY_HEIGHT + 10;
+        addSection("Mods Screen Buttons", yPos);
+        yPos += SECTION_HEADER_HEIGHT;
+        addResetButton("Reset Buttons", yPos, () -> {
+            config.resetModsScreenButtons();
+            config.save();
+            this.minecraft.setScreen(new CthuLibConfigScreen(parent));
+        });
+        yPos = addPlacement("Wiki ", Placements.WIKI, leftX, yPos);
+        yPos = addPlacement("Discord ", Placements.DISCORD, leftX, yPos);
+        yPos -= ENTRY_HEIGHT;
+
+        yPos += ENTRY_HEIGHT + 10;
         addSection("Modlist Button", yPos);
+        yPos += SECTION_HEADER_HEIGHT;
         addCheckbox("Show Modlist Button", config.showModlistButton, val -> config.showModlistButton = val, leftX, yPos);
         addResetButton("Reset Modlist", yPos, () -> {
             config.resetModlistButton();
@@ -94,26 +109,13 @@ public class CthuLibConfigScreen extends Screen {
             this.minecraft.setScreen(new CthuLibConfigScreen(parent));
         });
         yPos += ENTRY_HEIGHT;
-        addIntSlider("Title Screen X", config.buttonXtitleScreen, -2000, 2000, val -> config.buttonXtitleScreen = val, leftX, yPos);
-        yPos += ENTRY_HEIGHT;
-        addIntSlider("Title Screen Y", config.buttonYtitleScreen, -2000, 2000, val -> config.buttonYtitleScreen = val, leftX, yPos);
-        yPos += ENTRY_HEIGHT;
-        addIntSlider("Width", config.modlistButtonWidth, 10, 100, val -> config.modlistButtonWidth = val, leftX, yPos);
-        yPos += ENTRY_HEIGHT;
-        addIntSlider("Height", config.modlistButtonHeight, 10, 100, val -> config.modlistButtonHeight = val, leftX, yPos);
-        yPos += ENTRY_HEIGHT;
-        addFloatSlider("Scale", config.modlistButtonScale, 0.3f, 3.0f, val -> config.modlistButtonScale = val, leftX, yPos);
-        yPos += ENTRY_HEIGHT;
-        addCheckbox("Scale with Screen", config.modlistButtonScaleWithScreen, val -> config.modlistButtonScaleWithScreen = val, leftX, yPos);
-        yPos += ENTRY_HEIGHT;
-        addCheckbox("Use Anchor (GUI-pixel offset)", config.modlistButtonUseAnchor, val -> config.modlistButtonUseAnchor = val, leftX, yPos);
-        yPos += ENTRY_HEIGHT;
-        addFloatSlider("Min Scale", config.modlistButtonMinScale, 0.1f, 2.0f, val -> config.modlistButtonMinScale = val, leftX, yPos);
-        yPos += ENTRY_HEIGHT;
-        addFloatSlider("Max Scale", config.modlistButtonMaxScale, 0.1f, 3.0f, val -> config.modlistButtonMaxScale = val, leftX, yPos);
+        yPos = addPlacement("Title ", Placements.MODLIST_TITLE, leftX, yPos);
+        yPos = addPlacement("Settings ", Placements.MODLIST_SETTINGS, leftX, yPos);
+        yPos -= ENTRY_HEIGHT;
 
         yPos += ENTRY_HEIGHT + 10;
         addSection("Promo", yPos);
+        yPos += SECTION_HEADER_HEIGHT;
         addCheckbox("Show Promo Button", config.showPromoButton, val -> config.showPromoButton = val, leftX, yPos);
         addResetButton("Reset Promo", yPos, () -> {
             config.resetPromoButton();
@@ -127,34 +129,12 @@ public class CthuLibConfigScreen extends Screen {
         yPos += ENTRY_HEIGHT;
         addTextField("Promo URL", "e.g., https://example.com", config.promoButtonUrl, val -> config.promoButtonUrl = val, leftX, yPos);
         yPos += ENTRY_HEIGHT;
-        addIntSlider("Promo X", config.promoButtonX, -1000, 1000, val -> config.promoButtonX = val, leftX, yPos);
-        yPos += ENTRY_HEIGHT;
-        addIntSlider("Promo Y", config.promoButtonY, -1000, 1000, val -> config.promoButtonY = val, leftX, yPos);
-        yPos += ENTRY_HEIGHT;
-        addIntSlider("Promo Width", config.promoButtonWidth, 20, 400, val -> config.promoButtonWidth = val, leftX, yPos);
-        yPos += ENTRY_HEIGHT;
-        addIntSlider("Promo Height", config.promoButtonHeight, 10, 200, val -> config.promoButtonHeight = val, leftX, yPos);
-        yPos += ENTRY_HEIGHT;
-        addFloatSlider("Scale", config.promoButtonScale, 0.1f, 3.0f, val -> config.promoButtonScale = val, leftX, yPos);
-        yPos += ENTRY_HEIGHT;
-        addCheckbox("Scale with Screen", config.promoButtonScaleWithScreen, val -> config.promoButtonScaleWithScreen = val, leftX, yPos);
-        yPos += ENTRY_HEIGHT;
-        addCheckbox("Use Anchor (GUI-pixel offset)", config.promoButtonUseAnchor, val -> config.promoButtonUseAnchor = val, leftX, yPos);
-        yPos += ENTRY_HEIGHT;
-        addFloatSlider("Min Scale", config.promoButtonMinScale, 0.1f, 2.0f, val -> config.promoButtonMinScale = val, leftX, yPos);
-        yPos += ENTRY_HEIGHT;
-        addFloatSlider("Max Scale", config.promoButtonMaxScale, 0.1f, 3.0f, val -> config.promoButtonMaxScale = val, leftX, yPos);
-        yPos += ENTRY_HEIGHT;
-        addCheckbox("Start From Center X", config.promoButtonStartFromCenterX, val -> config.promoButtonStartFromCenterX = val, leftX, yPos);
-        yPos += ENTRY_HEIGHT;
-        addCheckbox("Start From Center Y", config.promoButtonStartFromCenterY, val -> config.promoButtonStartFromCenterY = val, leftX, yPos);
-        yPos += ENTRY_HEIGHT;
-        addCheckbox("Start From Left X", config.promoButtonStartFromLeftX, val -> config.promoButtonStartFromLeftX = val, leftX, yPos);
-        yPos += ENTRY_HEIGHT;
-        addCheckbox("Start From Right X", config.promoButtonStartFromRightX, val -> config.promoButtonStartFromRightX = val, leftX, yPos);
+        yPos = addPlacement("Promo ", Placements.PROMO, leftX, yPos);
+        yPos -= ENTRY_HEIGHT;
 
         yPos += ENTRY_HEIGHT + 10;
         addSection("Slider", yPos);
+        yPos += SECTION_HEADER_HEIGHT;
         addCheckbox("Show Project Slider", config.showProjectSlider, val -> config.showProjectSlider = val, leftX, yPos);
         addResetButton("Reset Slider", yPos, () -> {
             config.resetProjectSlider();
@@ -164,35 +144,12 @@ public class CthuLibConfigScreen extends Screen {
         yPos += ENTRY_HEIGHT;
         addTextField("Slider Header Text", "e.g., Check our other projects!", config.sliderHeaderText, val -> config.sliderHeaderText = val, leftX, yPos);
         yPos += ENTRY_HEIGHT;
-        addIntSlider("Slider X", config.sliderX, -2000, 2000, val -> config.sliderX = val, leftX, yPos);
-        yPos += ENTRY_HEIGHT;
-        addIntSlider("Slider Y", config.sliderY, -1000, 1000, val -> config.sliderY = val, leftX, yPos);
-        yPos += ENTRY_HEIGHT;
-        addIntSlider("Card Width", config.sliderCardWidth, 100, 600, val -> config.sliderCardWidth = val, leftX, yPos);
-        yPos += ENTRY_HEIGHT;
-        addIntSlider("Card Height", config.sliderCardHeight, 40, 300, val -> config.sliderCardHeight = val, leftX, yPos);
-        yPos += ENTRY_HEIGHT;
-        addFloatSlider("Slider Scale", config.sliderScale, 0.3f, 2.0f, val -> config.sliderScale = val, leftX, yPos);
-        yPos += ENTRY_HEIGHT;
+        yPos = addPlacement("Slider ", Placements.SLIDER, leftX, yPos);
         addCheckbox("Auto Slide", config.sliderAutoSlide, val -> config.sliderAutoSlide = val, leftX, yPos);
         yPos += ENTRY_HEIGHT;
         addFloatSlider("Auto Slide Delay (s)", config.sliderAutoSlideDelay, 1.0f, 20.0f, val -> config.sliderAutoSlideDelay = val, leftX, yPos);
         yPos += ENTRY_HEIGHT;
-        addCheckbox("Start From Center X", config.sliderStartFromCenterX, val -> config.sliderStartFromCenterX = val, leftX, yPos);
         yPos += ENTRY_HEIGHT;
-        addCheckbox("Start From Center Y", config.sliderStartFromCenterY, val -> config.sliderStartFromCenterY = val, leftX, yPos);
-        yPos += ENTRY_HEIGHT;
-        addCheckbox("Start From Left X", config.sliderStartFromLeftX, val -> config.sliderStartFromLeftX = val, leftX, yPos);
-        yPos += ENTRY_HEIGHT;
-        addCheckbox("Start From Right X", config.sliderStartFromRightX, val -> config.sliderStartFromRightX = val, leftX, yPos);
-        yPos += ENTRY_HEIGHT;
-        addCheckbox("Scale With Screen", config.sliderScaleWithScreen, val -> config.sliderScaleWithScreen = val, leftX, yPos);
-        yPos += ENTRY_HEIGHT;
-        addCheckbox("Use Anchor (GUI-pixel offset)", config.sliderUseAnchor, val -> config.sliderUseAnchor = val, leftX, yPos);
-        yPos += ENTRY_HEIGHT;
-        addFloatSlider("Min Scale", config.sliderMinScale, 0.1f, 1.0f, val -> config.sliderMinScale = val, leftX, yPos);
-        yPos += ENTRY_HEIGHT;
-        addFloatSlider("Max Scale", config.sliderMaxScale, 1.0f, 3.0f, val -> config.sliderMaxScale = val, leftX, yPos);
         yPos += ENTRY_HEIGHT;
         addCheckbox("Show Previews", config.sliderShowPreviews, val -> config.sliderShowPreviews = val, leftX, yPos);
         yPos += ENTRY_HEIGHT;
@@ -218,6 +175,7 @@ public class CthuLibConfigScreen extends Screen {
 
         yPos += ENTRY_HEIGHT + 10;
         addSection("Changelog", yPos);
+        yPos += SECTION_HEADER_HEIGHT;
         addCheckbox("Show Changelog Button", config.showChangelogButton, val -> config.showChangelogButton = val, leftX, yPos);
         addResetButton("Reset Changelog", yPos, () -> {
             config.resetChangelog();
@@ -227,32 +185,7 @@ public class CthuLibConfigScreen extends Screen {
         yPos += ENTRY_HEIGHT;
         addTextField("Changelog Button Texture", "e.g., cthulib:textures/gui/changelog.png", config.changelogButtonTexture, val -> config.changelogButtonTexture = val, leftX, yPos);
         yPos += ENTRY_HEIGHT;
-        addIntSlider("Changelog X", config.changelogButtonX, -1000, 1000, val -> config.changelogButtonX = val, leftX, yPos);
-        yPos += ENTRY_HEIGHT;
-        addIntSlider("Changelog Y", config.changelogButtonY, -1000, 1000, val -> config.changelogButtonY = val, leftX, yPos);
-        yPos += ENTRY_HEIGHT;
-        addIntSlider("Changelog Width", config.changelogButtonWidth, 50, 300, val -> config.changelogButtonWidth = val, leftX, yPos);
-        yPos += ENTRY_HEIGHT;
-        addIntSlider("Changelog Height", config.changelogButtonHeight, 10, 100, val -> config.changelogButtonHeight = val, leftX, yPos);
-        yPos += ENTRY_HEIGHT;
-        addFloatSlider("Scale", config.changelogButtonScale, 0.1f, 3.0f, val -> config.changelogButtonScale = val, leftX, yPos);
-        yPos += ENTRY_HEIGHT;
-        addCheckbox("Scale with Screen", config.changelogButtonScaleWithScreen, val -> config.changelogButtonScaleWithScreen = val, leftX, yPos);
-        yPos += ENTRY_HEIGHT;
-        addCheckbox("Use Anchor (GUI-pixel offset)", config.changelogButtonUseAnchor, val -> config.changelogButtonUseAnchor = val, leftX, yPos);
-        yPos += ENTRY_HEIGHT;
-        addFloatSlider("Min Scale", config.changelogButtonMinScale, 0.1f, 2.0f, val -> config.changelogButtonMinScale = val, leftX, yPos);
-        yPos += ENTRY_HEIGHT;
-        addFloatSlider("Max Scale", config.changelogButtonMaxScale, 0.1f, 3.0f, val -> config.changelogButtonMaxScale = val, leftX, yPos);
-        yPos += ENTRY_HEIGHT;
-        addCheckbox("Start From Center X", config.changelogButtonStartFromCenterX, val -> config.changelogButtonStartFromCenterX = val, leftX, yPos);
-        yPos += ENTRY_HEIGHT;
-        addCheckbox("Start From Center Y", config.changelogButtonStartFromCenterY, val -> config.changelogButtonStartFromCenterY = val, leftX, yPos);
-        yPos += ENTRY_HEIGHT;
-        addCheckbox("Start From Left X", config.changelogButtonStartFromLeftX, val -> config.changelogButtonStartFromLeftX = val, leftX, yPos);
-        yPos += ENTRY_HEIGHT;
-        addCheckbox("Start From Right X", config.changelogButtonStartFromRightX, val -> config.changelogButtonStartFromRightX = val, leftX, yPos);
-        yPos += ENTRY_HEIGHT;
+        yPos = addPlacement("Changelog ", Placements.CHANGELOG, leftX, yPos);
         addIntSlider("Panel Width", config.changelogPanelWidth, 300, 1200, val -> config.changelogPanelWidth = val, leftX, yPos);
         yPos += ENTRY_HEIGHT;
         addIntSlider("Panel Height", config.changelogPanelHeight, 200, 800, val -> config.changelogPanelHeight = val, leftX, yPos);
@@ -260,9 +193,12 @@ public class CthuLibConfigScreen extends Screen {
         addTextField("Panel Texture", "e.g., cthulib:textures/gui/panel.png", config.changelogPanelTexture, val -> config.changelogPanelTexture = val, leftX, yPos);
         yPos += ENTRY_HEIGHT;
         addCheckbox("Show Notification Badge", config.showChangelogNotification, val -> config.showChangelogNotification = val, leftX, yPos);
+        yPos += ENTRY_HEIGHT;
+        addTextField("Version Pattern", "e.g., Fantasy MC [1.21.1]-{version} [BETA]", config.changelogVersionPattern, val -> config.changelogVersionPattern = val, leftX, yPos);
 
         yPos += ENTRY_HEIGHT + 10;
         addSection("Animations", yPos);
+        yPos += SECTION_HEADER_HEIGHT;
         addCheckbox("Animations Enabled", config.animationsEnabled, val -> config.animationsEnabled = val, leftX, yPos);
         yPos += ENTRY_HEIGHT;
         addFloatSlider("Hover Speed", config.hoverAnimationSpeed, 0.01f, 1.0f, val -> config.hoverAnimationSpeed = val, leftX, yPos);
@@ -295,6 +231,38 @@ public class CthuLibConfigScreen extends Screen {
                 this.minecraft.setScreen(parent);
             }
         }).bounds(this.width / 2 - 100, this.height - 28, 200, 20).build());
+    }
+
+    private int addPlacement(String prefix, Placement.Access access, int x, int y) {
+        addIntSlider(prefix + "X", access.x().get().applyAsInt(config), -2000, 2000, val -> access.x().set().accept(config, val), x, y);
+        y += ENTRY_HEIGHT;
+        addIntSlider(prefix + "Y", access.y().get().applyAsInt(config), -2000, 2000, val -> access.y().set().accept(config, val), x, y);
+        y += ENTRY_HEIGHT;
+        addIntSlider(prefix + "Width", access.width().get().applyAsInt(config), 10, 600, val -> access.width().set().accept(config, val), x, y);
+        y += ENTRY_HEIGHT;
+        addIntSlider(prefix + "Height", access.height().get().applyAsInt(config), 10, 300, val -> access.height().set().accept(config, val), x, y);
+        y += ENTRY_HEIGHT;
+        addFloatSlider(prefix + "Scale", access.scale().get().get(config), 0.1f, 3.0f, val -> access.scale().set().set(config, val), x, y);
+        y += ENTRY_HEIGHT;
+        addCheckbox(prefix + "Scale with Screen", access.scaleWithScreen().get().test(config), val -> access.scaleWithScreen().set().accept(config, val), x, y);
+        y += ENTRY_HEIGHT;
+        addFloatSlider(prefix + "Min Scale", access.minScale().get().get(config), 0.1f, 2.0f, val -> access.minScale().set().set(config, val), x, y);
+        y += ENTRY_HEIGHT;
+        addFloatSlider(prefix + "Max Scale", access.maxScale().get().get(config), 0.1f, 3.0f, val -> access.maxScale().set().set(config, val), x, y);
+        y += ENTRY_HEIGHT;
+        addCheckbox(prefix + "Use Anchor (GUI-pixel offset)", access.useAnchor().get().test(config), val -> access.useAnchor().set().accept(config, val), x, y);
+        y += ENTRY_HEIGHT;
+        addCheckbox(prefix + "Start From Center X", access.centerX().get().test(config), val -> access.centerX().set().accept(config, val), x, y);
+        y += ENTRY_HEIGHT;
+        addCheckbox(prefix + "Start From Center Y", access.centerY().get().test(config), val -> access.centerY().set().accept(config, val), x, y);
+        y += ENTRY_HEIGHT;
+        addCheckbox(prefix + "Start From Left X", access.leftX().get().test(config), val -> access.leftX().set().accept(config, val), x, y);
+        y += ENTRY_HEIGHT;
+        addCheckbox(prefix + "Start From Right X", access.rightX().get().test(config), val -> access.rightX().set().accept(config, val), x, y);
+        y += ENTRY_HEIGHT;
+        addTextField(prefix + "Anchor (FancyMenu style)", Placement.ANCHOR_HINT, access.anchor().get().apply(config),
+                val -> access.anchor().set().accept(config, val), x, y);
+        return y + ENTRY_HEIGHT;
     }
 
     private void addResetButton(String label, int y, Runnable onPress) {

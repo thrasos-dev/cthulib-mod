@@ -34,33 +34,16 @@ public class ModListButton extends DraggableTitleScreenWidget {
     }
     
     private void updatePosition() {
-        if (elementType != null) {
-            if (elementType == UIElementPositionManager.ElementType.BRIGHTNESS_BUTTON_TITLE) {
-                CthuLibConfig cfg = CthuLibConfig.getInstance();
-                int scaledW = (int)(cfg.modlistButtonWidth * cfg.modlistButtonScale);
-                int scaledH = (int)(cfg.modlistButtonHeight * cfg.modlistButtonScale);
-                UIElementPositionManager.PositionInfo pos =
-                    UIElementPositionManager.calculateAdvancedPosition(
-                        elementType, scaledW, scaledH,
-                        cfg.modlistButtonScaleWithScreen,
-                        cfg.modlistButtonMinScale,
-                        cfg.modlistButtonMaxScale,
-                        false, false, false, false,
-                        cfg.modlistButtonUseAnchor
-                    );
-                this.width = pos.width;
-                this.height = pos.height;
-                this.setX(pos.x);
-                this.setY(pos.y);
-            } else {
-                UIElementPositionManager.PositionInfo pos =
-                    UIElementPositionManager.calculatePosition(elementType, baseWidth, baseHeight);
-                this.width = pos.width;
-                this.height = pos.height;
-                this.setX(pos.x);
-                this.setY(pos.y);
-            }
+        if (elementType == null) {
+            return;
         }
+        UIElementPositionManager.PositionInfo pos = elementType.access() != null
+                ? UIElementPositionManager.place(elementType)
+                : UIElementPositionManager.calculatePosition(elementType, baseWidth, baseHeight);
+        this.width = pos.width;
+        this.height = pos.height;
+        this.setX(pos.x);
+        this.setY(pos.y);
     }
 
     @Override
@@ -122,19 +105,8 @@ public class ModListButton extends DraggableTitleScreenWidget {
     @Override
     public boolean mouseReleased(double mouseX, double mouseY, int button) {
         if (isDragging()) {
-            if (elementType == UIElementPositionManager.ElementType.BRIGHTNESS_BUTTON_TITLE) {
-                CthuLibConfig config = CthuLibConfig.getInstance();
-                int scaledW = (int)(config.modlistButtonWidth * config.modlistButtonScale);
-                int scaledH = (int)(config.modlistButtonHeight * config.modlistButtonScale);
-                UIElementPositionManager.endDragAdvanced(
-                    elementType, "Modlist Button",
-                    scaledW, scaledH,
-                    config.modlistButtonScaleWithScreen,
-                    config.modlistButtonMinScale,
-                    config.modlistButtonMaxScale,
-                    false, false, false, false,
-                    config.modlistButtonUseAnchor
-                );
+            if (elementType.access() != null) {
+                UIElementPositionManager.finishDrag(elementType, getWidgetName());
             } else {
                 UIElementPositionManager.endDrag(elementType, getWidgetName());
             }

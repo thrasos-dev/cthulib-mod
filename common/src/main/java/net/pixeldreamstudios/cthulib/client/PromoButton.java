@@ -45,23 +45,7 @@ public class PromoButton extends DraggableTitleScreenWidget {
     }
     
     private void updatePosition() {
-        CthuLibConfig config = CthuLibConfig.getInstance();
-        int scaledW = (int)(config.promoButtonWidth * config.promoButtonScale);
-        int scaledH = (int)(config.promoButtonHeight * config.promoButtonScale);
-        UIElementPositionManager.PositionInfo pos = 
-            UIElementPositionManager.calculateAdvancedPosition(
-                UIElementPositionManager.ElementType.PROMO_BUTTON,
-                scaledW, scaledH,
-                config.promoButtonScaleWithScreen,
-                config.promoButtonMinScale,
-                config.promoButtonMaxScale,
-                config.promoButtonStartFromCenterX,
-                config.promoButtonStartFromCenterY,
-                config.promoButtonStartFromLeftX,
-                config.promoButtonStartFromRightX,
-                config.promoButtonUseAnchor
-            );
-        
+        UIElementPositionManager.PositionInfo pos = UIElementPositionManager.place(UIElementPositionManager.ElementType.PROMO_BUTTON);
         this.width = pos.width;
         this.height = pos.height;
         this.setX(pos.x);
@@ -158,22 +142,7 @@ public class PromoButton extends DraggableTitleScreenWidget {
     @Override
     public boolean mouseReleased(double mouseX, double mouseY, int button) {
         if (isDragging()) {
-            CthuLibConfig config = CthuLibConfig.getInstance();
-            int scaledW = (int)(config.promoButtonWidth * config.promoButtonScale);
-            int scaledH = (int)(config.promoButtonHeight * config.promoButtonScale);
-            UIElementPositionManager.endDragAdvanced(
-                UIElementPositionManager.ElementType.PROMO_BUTTON,
-                "Promo Button",
-                scaledW, scaledH,
-                config.promoButtonScaleWithScreen,
-                config.promoButtonMinScale,
-                config.promoButtonMaxScale,
-                config.promoButtonStartFromCenterX,
-                config.promoButtonStartFromCenterY,
-                config.promoButtonStartFromLeftX,
-                config.promoButtonStartFromRightX,
-                config.promoButtonUseAnchor
-            );
+            UIElementPositionManager.finishDrag(UIElementPositionManager.ElementType.PROMO_BUTTON, "Promo Button");
             return true;
         }
         return super.mouseReleased(mouseX, mouseY, button);

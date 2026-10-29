@@ -7,82 +7,70 @@ import net.pixeldreamstudios.cthulib.config.CthuLibConfig;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.BiConsumer;
-import java.util.function.Function;
+import java.util.Optional;
 public class UIElementPositionManager {
 
     public enum ElementType {
-        BRIGHTNESS_BUTTON_TITLE("brightness_button_title",
-            cfg -> cfg.buttonXtitleScreen,
-            cfg -> cfg.buttonYtitleScreen,
-            (cfg, x) -> cfg.buttonXtitleScreen = x,
-            (cfg, y) -> cfg.buttonYtitleScreen = y),
-        
-        BRIGHTNESS_BUTTON_SETTINGS("brightness_button_settings",
-            cfg -> cfg.buttonXsettings,
-            cfg -> cfg.buttonYsettings,
-            (cfg, x) -> cfg.buttonXsettings = x,
-            (cfg, y) -> cfg.buttonYsettings = y),
-        
-        PROMO_BUTTON("promo_button",
-            cfg -> cfg.promoButtonX,
-            cfg -> cfg.promoButtonY,
-            (cfg, x) -> cfg.promoButtonX = x,
-            (cfg, y) -> cfg.promoButtonY = y),
-        
-        CHANGELOG_BUTTON("changelog_button",
-            cfg -> cfg.changelogButtonX,
-            cfg -> cfg.changelogButtonY,
-            (cfg, x) -> cfg.changelogButtonX = x,
-            (cfg, y) -> cfg.changelogButtonY = y),
-        
-        PROJECT_SLIDER("project_slider",
-            cfg -> cfg.sliderX,
-            cfg -> cfg.sliderY,
-            (cfg, x) -> cfg.sliderX = x,
-            (cfg, y) -> cfg.sliderY = y),
-        
-        CHANGELOG_PANEL("changelog_panel",
-            cfg -> cfg.changelogPanelX,
-            cfg -> cfg.changelogPanelY,
-            (cfg, x) -> cfg.changelogPanelX = x,
-            (cfg, y) -> cfg.changelogPanelY = y);
-        
+        BRIGHTNESS_BUTTON_TITLE("brightness_button_title", Placements.MODLIST_TITLE),
+        BRIGHTNESS_BUTTON_SETTINGS("brightness_button_settings", Placements.MODLIST_SETTINGS),
+        PROMO_BUTTON("promo_button", Placements.PROMO),
+        CHANGELOG_BUTTON("changelog_button", Placements.CHANGELOG),
+        PROJECT_SLIDER("project_slider", Placements.SLIDER),
+        WIKI_BUTTON("wiki_button", Placements.WIKI),
+        DISCORD_BUTTON("discord_button", Placements.DISCORD),
+        CHANGELOG_PANEL("changelog_panel", new Placement.IntField(cfg -> cfg.changelogPanelX, (cfg, x) -> cfg.changelogPanelX = x),
+                new Placement.IntField(cfg -> cfg.changelogPanelY, (cfg, y) -> cfg.changelogPanelY = y));
+
+        private static final String FANCYMENU_PREFIX = "cthulib_";
+
         private final String id;
-        private final Function<CthuLibConfig, Integer> xGetter;
-        private final Function<CthuLibConfig, Integer> yGetter;
-        private final BiConsumer<CthuLibConfig, Integer> xSetter;
-        private final BiConsumer<CthuLibConfig, Integer> ySetter;
-        
-        ElementType(String id, 
-                   Function<CthuLibConfig, Integer> xGetter,
-                   Function<CthuLibConfig, Integer> yGetter,
-                   BiConsumer<CthuLibConfig, Integer> xSetter,
-                   BiConsumer<CthuLibConfig, Integer> ySetter) {
+        private final Placement.Access access;
+        private final Placement.IntField x;
+        private final Placement.IntField y;
+
+        ElementType(String id, Placement.Access access) {
             this.id = id;
-            this.xGetter = xGetter;
-            this.yGetter = yGetter;
-            this.xSetter = xSetter;
-            this.ySetter = ySetter;
+            this.access = access;
+            this.x = access.x();
+            this.y = access.y();
         }
-        
+
+        ElementType(String id, Placement.IntField x, Placement.IntField y) {
+            this.id = id;
+            this.access = null;
+            this.x = x;
+            this.y = y;
+        }
+
+        public String id() {
+            return id;
+        }
+
+        public String fancyMenuId() {
+            return FANCYMENU_PREFIX + id;
+        }
+
+        public Placement.Access access() {
+            return access;
+        }
+
         public int getX(CthuLibConfig config) {
-            return xGetter.apply(config);
+            return x.get().applyAsInt(config);
         }
-        
+
         public int getY(CthuLibConfig config) {
-            return yGetter.apply(config);
+            return y.get().applyAsInt(config);
         }
-        
-        public void setX(CthuLibConfig config, int x) {
-            xSetter.accept(config, x);
+
+        public void setX(CthuLibConfig config, int value) {
+            x.set().accept(config, value);
         }
-        
-        public void setY(CthuLibConfig config, int y) {
-            ySetter.accept(config, y);
+
+        public void setY(CthuLibConfig config, int value) {
+            y.set().accept(config, value);
         }
     }
-    
+
     public static class PositionInfo {
         public int x;
         public int y;
@@ -146,8 +134,12 @@ public class UIElementPositionManager {
             if (!state.hasMoved) return;
 
             CthuLibConfig config = CthuLibConfig.getInstance();
-            type.setX(config, state.currentX);
-            type.setY(config, state.currentY);
+            Minecraft client = Minecraft.getInstance();
+            Optional<Placement.Origin> origin = type.access() == null ? Optional.empty()
+                    : Placement.origin(type.access().anchor().get().apply(config), client.getWindow().getGuiScaledWidth(),
+                    client.getWindow().getGuiScaledHeight(), type.fancyMenuId());
+            type.setX(config, state.currentX - origin.map(Placement.Origin::x).orElse(0));
+            type.setY(config, state.currentY - origin.map(Placement.Origin::y).orElse(0));
             config.save();
             
             Minecraft mc = Minecraft.getInstance();
@@ -177,6 +169,28 @@ public class UIElementPositionManager {
                                       boolean startFromCenterX, boolean startFromCenterY,
                                       boolean startFromLeftX, boolean startFromRightX,
                                       boolean useAnchor) {
+        endDragAdvanced(type, elementName, baseWidth, baseHeight, enableScaling, minScale, maxScale,
+                startFromCenterX, startFromCenterY, startFromLeftX, startFromRightX, useAnchor, "");
+    }
+
+    public static void finishDrag(ElementType type, String elementName) {
+        Placement.Spec spec = type.access().spec(CthuLibConfig.getInstance());
+        endDragAdvanced(type, elementName, spec.scaledWidth(), spec.scaledHeight(), spec.scaleWithScreen(), spec.minScale(), spec.maxScale(),
+                spec.centerX(), spec.centerY(), spec.leftX(), spec.rightX(), spec.useAnchor(), spec.anchor());
+    }
+
+    public static PositionInfo place(ElementType type) {
+        Placement.Spec spec = type.access().spec(CthuLibConfig.getInstance());
+        return calculateAdvancedPosition(type, spec.scaledWidth(), spec.scaledHeight(), spec.scaleWithScreen(), spec.minScale(), spec.maxScale(),
+                spec.centerX(), spec.centerY(), spec.leftX(), spec.rightX(), spec.useAnchor(), spec.anchor());
+    }
+
+    public static void endDragAdvanced(ElementType type, String elementName,
+                                      int baseWidth, int baseHeight,
+                                      boolean enableScaling, float minScale, float maxScale,
+                                      boolean startFromCenterX, boolean startFromCenterY,
+                                      boolean startFromLeftX, boolean startFromRightX,
+                                      boolean useAnchor, String anchor) {
         DragState state = dragStates.get(type);
         if (state != null && state.isDragging) {
             state.isDragging = false;
@@ -192,8 +206,11 @@ public class UIElementPositionManager {
             int width = calculateWidth(baseWidth, enableScaling, minScale, maxScale);
             int height = calculateHeight(baseHeight, enableScaling, minScale, maxScale);
 
+            Optional<Placement.Origin> origin = Placement.origin(anchor, screenWidth, screenHeight, type.fancyMenuId());
             int configX;
-            if (startFromCenterX) {
+            if (origin.isPresent()) {
+                configX = state.currentX - origin.get().x();
+            } else if (startFromCenterX) {
                 int guiOffset = state.currentX - (screenWidth / 2) + (width / 2);
                 configX = scalePos ? (int)(guiOffset / scaleFactor) : guiOffset;
             } else if (startFromLeftX) {
@@ -208,7 +225,9 @@ public class UIElementPositionManager {
             }
 
             int configY;
-            if (startFromCenterY) {
+            if (origin.isPresent()) {
+                configY = state.currentY - origin.get().y();
+            } else if (startFromCenterY) {
                 int guiOffset = state.currentY - (screenHeight / 2) + (height / 2);
                 configY = scalePos ? (int)(guiOffset / scaleFactor) : guiOffset;
             } else if (useAnchor) {
@@ -232,7 +251,7 @@ public class UIElementPositionManager {
                     Component.literal(
                         elementName + " Position Saved: Screen(" + state.currentX + ", " + state.currentY +
                         ") Config(" + configX + ", " + configY + ")" +
-                        (useAnchor ? " [Anchored]" : "")
+                        (origin.isPresent() ? " [" + anchor + "]" : useAnchor ? " [Anchored]" : "")
                     ),
                     true
                 );
@@ -270,6 +289,17 @@ public class UIElementPositionManager {
             boolean startFromCenterX, boolean startFromCenterY,
             boolean startFromLeftX, boolean startFromRightX,
             boolean useAnchor) {
+        return calculateAdvancedPosition(type, baseWidth, baseHeight, enableScaling, minScale, maxScale,
+                startFromCenterX, startFromCenterY, startFromLeftX, startFromRightX, useAnchor, "");
+    }
+
+    public static PositionInfo calculateAdvancedPosition(
+            ElementType type,
+            int baseWidth, int baseHeight,
+            boolean enableScaling, float minScale, float maxScale,
+            boolean startFromCenterX, boolean startFromCenterY,
+            boolean startFromLeftX, boolean startFromRightX,
+            boolean useAnchor, String anchor) {
 
         DragState state = dragStates.get(type);
         if (state != null && state.isDragging) {
@@ -295,6 +325,11 @@ public class UIElementPositionManager {
         int screenHeight = mc.getWindow().getGuiScaledHeight();
 
         int finalX, finalY;
+
+        Optional<Placement.Origin> origin = Placement.origin(anchor, screenWidth, screenHeight, type.fancyMenuId());
+        if (origin.isPresent()) {
+            return new PositionInfo(origin.get().x() + configX, origin.get().y() + configY, width, height);
+        }
 
         if (startFromCenterX) {
             finalX = (screenWidth / 2) + scaledConfigX - (width / 2);
