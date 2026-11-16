@@ -68,7 +68,10 @@ public class ModListButton extends DraggableTitleScreenWidget {
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
         RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, this.alpha);
-        graphics.blit(texture, renderX, renderY, 0, 0, this.width, this.height, this.width, this.height);
+        ResourceLocation drawn = RawImageTextures.resolve(texture);
+        if (drawn != null) {
+            graphics.blit(drawn, renderX, renderY, 0, 0, this.width, this.height, this.width, this.height);
+        }
         RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
 
         if (cfg.shineEffectEnabled) {

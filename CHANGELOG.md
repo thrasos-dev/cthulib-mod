@@ -1,7 +1,7 @@
-Improve the button system (nwo all buttons can be moved)
+- Added an update popup: when a newer version of the modpack is out, the title screen shows its changelog once per session
 
-Added anchoring
+- The changelog viewer now also includes the newest version's changelog
 
-Buttons now have ids (so that fancy menu can see them)
+- Animated GIF and WebP images are now supported
 
-Faster shine effect
+- Fixed images that fail to load being downloaded again every frame

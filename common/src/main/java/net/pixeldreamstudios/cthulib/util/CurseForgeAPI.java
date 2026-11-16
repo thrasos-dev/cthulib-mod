@@ -15,6 +15,7 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -120,6 +121,25 @@ public class CurseForgeAPI {
     }
 
     private static final int FILE_SEARCH_PAGE_SIZE = 5;
+    private static volatile JsonObject newestFile;
+
+    public static Optional<String> newestFileName() {
+        JsonObject file = newestFile;
+        return file == null ? Optional.empty() : Optional.of(file.get("displayName").getAsString());
+    }
+
+    public static FetchedChangelog fetchNewestFileChangelog(String projectId) {
+        JsonObject file = newestFile;
+        if (file == null) {
+            return null;
+        }
+        try {
+            return fetchChangelogForFile(projectId, file);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 
     private static JsonArray listFiles(String projectId, int pageSize) throws Exception {
         URI filesUri = new URI(PROXY_BASE + "/v1/mods/" + projectId + "/files?pageSize=" + pageSize + "&index=0");
@@ -213,6 +233,7 @@ public class CurseForgeAPI {
                 return null;
             }
             JsonObject latestFile = latestOnly.get(0).getAsJsonObject();
+            newestFile = latestFile;
 
             if (versionMatcher != null && Boolean.TRUE.equals(versionMatcher.apply(latestFile.get("displayName").getAsString()))) {
                 return fetchChangelogForFile(projectId, latestFile);

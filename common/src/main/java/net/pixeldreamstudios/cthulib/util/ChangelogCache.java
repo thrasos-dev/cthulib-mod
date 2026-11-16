@@ -238,16 +238,24 @@ public class ChangelogCache {
     }
 
     public static void saveChangelog(String fetchedVersion, String fileDate, String changelog) {
-        try {
-            long timestamp = System.currentTimeMillis();
-            CachedChangelog cached = new CachedChangelog(fetchedVersion, changelog, timestamp, fileDate);
-            latestCached = cached;
-            latestCacheLoaded = true;
+        latestCached = writeCacheFile(fetchedVersion, fileDate, changelog);
+        latestCacheLoaded = true;
+    }
 
-            String filename = sanitizeForFilename(fetchedVersion) + "-" + formatFileDate(fileDate) + ".json";
+    public static void storeChangelog(String version, String fileDate, String changelog) {
+        if (!cacheFileExists(version, fileDate)) {
+            writeCacheFile(version, fileDate, changelog);
+        }
+    }
+
+    private static CachedChangelog writeCacheFile(String version, String fileDate, String changelog) {
+        long timestamp = System.currentTimeMillis();
+        CachedChangelog cached = new CachedChangelog(version, changelog, timestamp, fileDate);
+        try {
+            String filename = sanitizeForFilename(version) + "-" + formatFileDate(fileDate) + ".json";
             File cacheFile = new File(CACHE_DIR, filename);
             JsonObject json = new JsonObject();
-            json.addProperty("version", fetchedVersion);
+            json.addProperty("version", version);
             json.addProperty("fileDate", fileDate);
             json.addProperty("changelog", changelog);
             json.addProperty("timestamp", timestamp);
@@ -258,6 +266,7 @@ public class ChangelogCache {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return cached;
     }
 
     public static List<CachedChangelog> listCachedChangelogsSorted() {

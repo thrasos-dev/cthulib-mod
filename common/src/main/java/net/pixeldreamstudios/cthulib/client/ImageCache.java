@@ -1,154 +1,133 @@
 package net.pixeldreamstudios.cthulib.client;
 
-import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.ResourceLocation;
+import net.pixeldreamstudios.cthulib.util.AnimatedImage;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ImageCache {
     private static final Map<String, ResourceLocation> textureCache = new ConcurrentHashMap<>();
-    private static final Map<String, Boolean> downloadingImages = new ConcurrentHashMap<>();
-    
+    private static final Set<String> loadingImages = ConcurrentHashMap.newKeySet();
+    private static final Set<String> failedImages = ConcurrentHashMap.newKeySet();
+    private static final String CACHE_ROOT = "cthulib_cache/";
+    private static final String PNG_FORMAT = "png";
+    private static final String USER_AGENT = "Mozilla/5.0";
+    private static final int CONNECT_TIMEOUT_MS = 5000;
+    private static final int READ_TIMEOUT_MS = 5000;
+
     public static ResourceLocation getOrLoadImage(String imageUrl, String cacheSubfolder, String texturePrefix) {
         if (imageUrl == null || imageUrl.isEmpty()) {
             return null;
         }
-        
+
         ResourceLocation cached = textureCache.get(imageUrl);
         if (cached != null) {
-            return cached;
+            return RawImageTextures.resolve(cached);
         }
-        
-        Boolean downloading = downloadingImages.get(imageUrl);
-        if (downloading != null && downloading) {
+        if (failedImages.contains(imageUrl) || !loadingImages.add(imageUrl)) {
             return null;
         }
-        
-        downloadingImages.put(imageUrl, true);
-        Minecraft minecraft = Minecraft.getInstance();
-        
+
+        File cacheDir = cacheDir(cacheSubfolder);
+        String key = texturePrefix + "_" + imageUrl;
         Util.ioPool().execute(() -> {
             try {
-                File cacheDir = new File(minecraft.gameDirectory, "cthulib_cache/" + cacheSubfolder);
-                cacheDir.mkdirs();
-                
-                String fileName = imageUrl.hashCode() + ".png";
-                File cacheFile = new File(cacheDir, fileName);
-                
-                if (!cacheFile.exists()) {
-                    downloadAndConvertImage(imageUrl, cacheFile);
+                Optional<File> file = prefetch(imageUrl, cacheDir, cacheName(imageUrl));
+                if (file.isEmpty()) {
+                    fail(imageUrl);
+                    return;
                 }
-                
-                if (cacheFile.exists()) {
-                    BufferedImage image = ImageIO.read(cacheFile);
-                    if (image != null) {
-                        minecraft.execute(() -> {
-                            NativeImage nativeImage = convertToNativeImage(image);
-                            if (nativeImage != null) {
-                                DynamicTexture dynamicTexture = new DynamicTexture(nativeImage);
-                                ResourceLocation location = minecraft.getTextureManager().register(
-                                    texturePrefix + "_" + imageUrl.hashCode(), dynamicTexture);
-                                textureCache.put(imageUrl, location);
-                            }
-                            downloadingImages.put(imageUrl, false);
-                        });
-                    } else {
-                        downloadingImages.put(imageUrl, false);
-                    }
-                } else {
-                    downloadingImages.put(imageUrl, false);
+                boolean accepted = RawImageTextures.load(key, RawImageTextures.locationFor(key), Files.readAllBytes(file.get().toPath()), loaded -> {
+                    loaded.ifPresentOrElse(result -> textureCache.put(imageUrl, result.location()), () -> failedImages.add(imageUrl));
+                    loadingImages.remove(imageUrl);
+                });
+                if (!accepted) {
+                    file.get().delete();
                 }
-            } catch (Exception e) {
-                downloadingImages.put(imageUrl, false);
+            } catch (IOException | URISyntaxException | RuntimeException e) {
+                fail(imageUrl);
             }
         });
-        
+
         return null;
     }
-    
-    private static void downloadAndConvertImage(String imageUrl, File cacheFile) {
-        try {
-            // Downloading image
-            URI uri = new URI(imageUrl);
-            HttpURLConnection connection = (HttpURLConnection) uri.toURL().openConnection();
-            connection.setRequestMethod("GET");
-            connection.setConnectTimeout(5000);
-            connection.setReadTimeout(5000);
-            
-            if (connection.getResponseCode() == 200) {
-                File tempFile = new File(cacheFile.getParentFile(), cacheFile.getName() + ".tmp");
-                InputStream inputStream = connection.getInputStream();
-                FileOutputStream fos = new FileOutputStream(tempFile);
-                
-                byte[] buffer = new byte[8192];
-                int bytesRead;
-                while ((bytesRead = inputStream.read(buffer)) != -1) {
-                    fos.write(buffer, 0, bytesRead);
-                }
-                
-                fos.close();
-                inputStream.close();
-                
-                BufferedImage bufferedImage = loadImage(tempFile, imageUrl);
-                
-                if (bufferedImage != null) {
-                    FileOutputStream pngFos = new FileOutputStream(cacheFile);
-                    ImageIO.write(bufferedImage, "png", pngFos);
-                    pngFos.close();
-                } else {
-                }
-                
-                tempFile.delete();
+
+    public static File cacheDir(String cacheSubfolder) {
+        return new File(Minecraft.getInstance().gameDirectory, CACHE_ROOT + cacheSubfolder);
+    }
+
+    public static String cacheName(String imageUrl) {
+        return String.valueOf(imageUrl.hashCode());
+    }
+
+    public static Optional<File> prefetch(String imageUrl, File cacheDir, String baseName) throws IOException, URISyntaxException {
+        cacheDir.mkdirs();
+        for (AnimatedImage.Format format : AnimatedImage.Format.values()) {
+            File raw = new File(cacheDir, baseName + "." + format.extension);
+            if (raw.exists()) {
+                return Optional.of(raw);
             }
+        }
+        File png = new File(cacheDir, baseName + "." + PNG_FORMAT);
+        if (png.exists() && !RawImageTextures.looksLikeGifUrl(imageUrl)) {
+            return Optional.of(png);
+        }
+
+        HttpURLConnection connection = (HttpURLConnection) new URI(imageUrl).toURL().openConnection();
+        connection.setRequestProperty("User-Agent", USER_AGENT);
+        connection.setConnectTimeout(CONNECT_TIMEOUT_MS);
+        connection.setReadTimeout(READ_TIMEOUT_MS);
+        try {
+            if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
+                return Optional.empty();
+            }
+            byte[] bytes;
+            try (InputStream in = connection.getInputStream()) {
+                bytes = in.readAllBytes();
+            }
+
+            Optional<AnimatedImage.Format> rawFormat = AnimatedImage.rawCacheFormat(bytes);
+            if (rawFormat.isPresent()) {
+                File raw = new File(cacheDir, baseName + "." + rawFormat.get().extension);
+                Files.write(raw.toPath(), bytes);
+                png.delete();
+                return Optional.of(raw);
+            }
+
+            ImageIO.scanForPlugins();
+            BufferedImage image = ImageIO.read(new ByteArrayInputStream(bytes));
+            if (image == null || !ImageIO.write(image, PNG_FORMAT, png)) {
+                return Optional.empty();
+            }
+            return Optional.of(png);
+        } finally {
             connection.disconnect();
-        } catch (Exception e) {
-            // Download failed
         }
     }
-    
-    private static BufferedImage loadImage(File file, String imageUrl) {
-        try {
-            return ImageIO.read(file);
-        } catch (Exception e) {
-            return null;
-        }
+
+    private static void fail(String imageUrl) {
+        failedImages.add(imageUrl);
+        loadingImages.remove(imageUrl);
     }
-    
-    private static NativeImage convertToNativeImage(BufferedImage bufferedImage) {
-        int width = bufferedImage.getWidth();
-        int height = bufferedImage.getHeight();
-        NativeImage nativeImage = new NativeImage(width, height, true);
-        
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                int argb = bufferedImage.getRGB(x, y);
-                int a = (argb >> 24) & 0xFF;
-                int r = (argb >> 16) & 0xFF;
-                int g = (argb >> 8) & 0xFF;
-                int b = argb & 0xFF;
-                
-                int abgr = (a << 24) | (b << 16) | (g << 8) | r;
-                nativeImage.setPixelRGBA(x, y, abgr);
-            }
-        }
-        
-        return nativeImage;
-    }
-    
+
     public static void clearCache() {
         textureCache.clear();
-        downloadingImages.clear();
+        loadingImages.clear();
+        failedImages.clear();
     }
 }

@@ -121,7 +121,10 @@ public class ChangelogButton extends DraggableTitleScreenWidget {
                 ResourceLocation loc = ResourceLocation.parse(textureStr);
                 RenderSystem.enableBlend();
                 RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
-                graphics.blit(loc, x, y, 0, 0, this.width, this.height, this.width, this.height);
+                ResourceLocation drawn = RawImageTextures.resolve(loc);
+                if (drawn != null) {
+                    graphics.blit(drawn, x, y, 0, 0, this.width, this.height, this.width, this.height);
+                }
                 RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
                 this.textureActive = true;
                 return;

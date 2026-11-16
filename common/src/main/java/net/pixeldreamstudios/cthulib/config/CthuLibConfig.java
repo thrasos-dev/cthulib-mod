@@ -148,6 +148,7 @@ public class CthuLibConfig {
     public int changelogPanelHeight = 400;
     public String changelogPanelTexture = "";
     public boolean showChangelogNotification = true;
+    public boolean showUpdateAnnouncement = true;
     public String changelogVersionPattern = "Fantasy MC [1.21.1]-{version} [BETA]";
     public int devModeKey1 = 80; // P key (GLFW_KEY_P)
     public int devModeKey2 = 68; // D key (GLFW_KEY_D)
@@ -226,7 +227,7 @@ public class CthuLibConfig {
                         "showProjectSlider", "sliderAutoSlide", "sliderShowPreviews", "sliderStartFromCenterX", "sliderStartFromCenterY", "sliderStartFromLeftX", "sliderStartFromRightX", "sliderScaleWithScreen", "sliderUseAnchor",
                         "sliderShowFilterButton", "sliderEntryAnimationEnabled", "sliderCardTransitionEnabled",
                         "showChangelogButton", "changelogButtonScaleWithScreen", "changelogButtonUseAnchor", "changelogButtonStartFromCenterX", "changelogButtonStartFromCenterY", "changelogButtonStartFromLeftX", "changelogButtonStartFromRightX",
-                        "showChangelogNotification", "animationsEnabled", "shineEffectEnabled",
+                        "showChangelogNotification", "showUpdateAnnouncement", "animationsEnabled", "shineEffectEnabled",
                         "modlistButtonScaleWithScreen", "modlistButtonUseAnchor", "showModlistButton",
                         "buttonTitleScreenStartFromCenterX", "buttonTitleScreenStartFromCenterY", "buttonTitleScreenStartFromLeftX", "buttonTitleScreenStartFromRightX",
                         "buttonSettingsUseAnchor", "buttonSettingsStartFromCenterX", "buttonSettingsStartFromCenterY", "buttonSettingsStartFromLeftX", "buttonSettingsStartFromRightX",
@@ -386,6 +387,7 @@ public class CthuLibConfig {
         config.changelogPanelHeight = 400;
         config.changelogPanelTexture = "";
         config.showChangelogNotification = true;
+        config.showUpdateAnnouncement = true;
         config.changelogVersionPattern = "Fantasy MC [1.21.1]-{version} [BETA]";
 
         config.devModeKey1 = 80; // P key
@@ -555,6 +557,7 @@ public class CthuLibConfig {
         this.changelogPanelHeight = defaults.changelogPanelHeight;
         this.changelogPanelTexture = defaults.changelogPanelTexture;
         this.showChangelogNotification = defaults.showChangelogNotification;
+        this.showUpdateAnnouncement = defaults.showUpdateAnnouncement;
         this.changelogVersionPattern = defaults.changelogVersionPattern;
     }
 

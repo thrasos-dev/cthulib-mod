@@ -4,8 +4,6 @@ import net.neoforged.fml.ModList;
 import net.pixeldreamstudios.cthulib.client.ModData;
 import net.pixeldreamstudios.cthulib.client.ModIconLoader;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -56,39 +54,19 @@ public class ModIconLoaderNeoForge {
                 pathsToTry.add("META-INF/icon.png");
                 pathsToTry.add("META-INF/logo.png");
 
-                BufferedImage image = null;
-
                 if (Files.isRegularFile(modRoot) && modRoot.toString().endsWith(".jar")) {
                     try (FileSystem fs = FileSystems.newFileSystem(modRoot, (ClassLoader) null)) {
                         for (String pathStr : pathsToTry) {
-                            Path iconPath = fs.getPath(pathStr);
-                            if (Files.exists(iconPath)) {
-                                try (InputStream is = Files.newInputStream(iconPath)) {
-                                    image = ImageIO.read(is);
-                                    if (image != null) break;
-                                } catch (Exception e) {
-                                }
+                            if (ModIconLoader.tryRegisterIcon(mod.modId, fs.getPath(""), pathStr, callback)) {
+                                return;
                             }
                         }
                     }
                 } else {
                     for (String pathStr : pathsToTry) {
-                        Path iconPath = modRoot.resolve(pathStr);
-                        if (Files.exists(iconPath)) {
-                            try (InputStream is = Files.newInputStream(iconPath)) {
-                                image = ImageIO.read(is);
-                                if (image != null) break;
-                            } catch (Exception e) {
-                            }
+                        if (ModIconLoader.tryRegisterIcon(mod.modId, modRoot, pathStr, callback)) {
+                            return;
                         }
-                    }
-                }
-
-                if (image != null) {
-                    var rl = ModIconLoader.registerIcon(mod.modId, image);
-                    if (rl != null) {
-                        callback.onIconLoaded(rl);
-                        return;
                     }
                 }
 

@@ -236,7 +236,10 @@ public class ModDetailPanel {
         if (modIcon != null) {
             RenderSystem.enableBlend();
             RenderSystem.setShaderColor(1f, 1f, 1f, openProgress);
-            gfx.blit(modIcon, iconX, iconY, 0, 0, iconSize, iconSize, iconSize, iconSize);
+            ResourceLocation drawnIcon = RawImageTextures.resolve(modIcon);
+            if (drawnIcon != null) {
+                gfx.blit(drawnIcon, iconX, iconY, 0, 0, iconSize, iconSize, iconSize, iconSize);
+            }
             RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
 
             float pulseEffect = (float)(Math.sin(System.currentTimeMillis() / 400.0) * 0.5 + 0.5);

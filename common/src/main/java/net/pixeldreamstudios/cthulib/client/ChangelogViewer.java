@@ -1,6 +1,5 @@
 package net.pixeldreamstudios.cthulib.client;
 
-import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
@@ -8,25 +7,17 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.TitleScreen;
-import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.pixeldreamstudios.cthulib.config.CthuLibConfig;
 import net.pixeldreamstudios.cthulib.util.ChangelogCache;
 import net.pixeldreamstudios.cthulib.util.ChangelogCache.CachedChangelog;
+import net.pixeldreamstudios.cthulib.util.UpdateAnnouncement;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
@@ -34,6 +25,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ChangelogViewer extends Screen {
     
@@ -54,6 +48,8 @@ public class ChangelogViewer extends Screen {
     private final Map<String, ImageData> imageDimensions = new HashMap<>();
     private final Map<String, ImageClickArea> imageClickAreas = new HashMap<>();
     private final Map<String, Boolean> downloadingImages = new HashMap<>();
+    private final Set<String> failedImages = ConcurrentHashMap.newKeySet();
+    private static final String IMAGE_LOAD_ERROR = "[Image load error]";
     private boolean isDraggingScrollbar = false;
     private int scrollbarX = 0;
     private int scrollbarY = 0;
@@ -65,12 +61,39 @@ public class ChangelogViewer extends Screen {
     private int panelY = 0;
     private int panelWidth = 0;
     private int panelHeight = 0;
+    private final UpdateAnnouncement.Announcement announcement;
+    private final Runnable closeAction;
+    private boolean dontShowAgain = false;
+    private Button announcementCloseButton;
+    private static final String ANNOUNCEMENT_TITLE = "Update available: %s (you have %s)";
+    private static final String DONT_SHOW_AGAIN = "Don't show again";
+    private static final String CLOSE_LABEL = "Close";
+    private static final int CLOSE_BUTTON_WIDTH = 60;
+    private static final int CHECKBOX_SIZE = 10;
+    private static final int CHECKBOX_TICK_INSET = 3;
+    private static final int CHECKBOX_BORDER_COLOR = 0xFFFFAA66;
+    private static final int CHECKBOX_FILL_COLOR = 0xFF1A1A1A;
+    private static final int CHECKBOX_TICK_COLOR = 0xFFFFDD66;
+    private static final int PILL_PADDING = 8;
+    private static final int PILL_GAP_BELOW_PANEL = 6;
+
+    public ChangelogViewer(Screen parent, UpdateAnnouncement.Announcement announcement, Runnable closeAction) {
+        super(Component.literal(String.format(ANNOUNCEMENT_TITLE, announcement.version(), announcement.installedVersion())));
+        this.parent = parent;
+        this.minecraft = Minecraft.getInstance();
+        this.announcement = announcement;
+        this.closeAction = closeAction;
+        this.changelog = announcement.changelog();
+        this.displayedVersion = announcement.version();
+    }
 
     public ChangelogViewer(Screen parent) {
         super(Component.literal("Changelog"));
         this.parent = parent;
         this.minecraft = Minecraft.getInstance();
-        
+        this.announcement = null;
+        this.closeAction = null;
+
         String projectId = ChangelogCache.getProjectId();
         String version = ChangelogCache.getCurrentVersion();
         
@@ -158,7 +181,22 @@ public class ChangelogViewer extends Screen {
             updateNavButtonStates();
         }
 
+        if (announcement != null) {
+            announcementCloseButton = Button.builder(Component.literal(CLOSE_LABEL), btn -> closeAction.run())
+                    .bounds(0, 0, CLOSE_BUTTON_WIDTH, NAV_BUTTON_SIZE).build();
+        }
+
         calculateMaxScroll();
+    }
+
+    public boolean isAnnouncement() {
+        return announcement != null;
+    }
+
+    public void finishAnnouncement() {
+        if (announcement != null && dontShowAgain) {
+            UpdateAnnouncement.dismiss(announcement);
+        }
     }
 
     private void updateNavButtonStates() {
@@ -348,26 +386,13 @@ public class ChangelogViewer extends Screen {
         renderBackground(graphics, mouseX, mouseY, partialTick);
         renderChangelogPanel(graphics, mouseX, mouseY, partialTick);
         renderNavBar(graphics);
+        renderAnnouncementBar(graphics, mouseX, mouseY);
         super.render(graphics, mouseX, mouseY, partialTick);
     }
 
-    private void renderNavBar(GuiGraphics graphics) {
-        if (navPrevButton == null || cachedHistory == null || cachedHistory.isEmpty()) {
-            return;
-        }
-
-        String label = buildNavLabel();
-        int textWidth = this.font.width(label);
+    private void beginPill(GuiGraphics graphics, int baseWidth, int baseHeight) {
         int screenHeight = this.minecraft != null ? this.minecraft.getWindow().getGuiScaledHeight() : this.height;
-
-        int padding = 8;
-        int labelWidth = Math.max(textWidth + 8, 60);
-        int baseWidth = NAV_JUMP_WIDTH + NAV_GAP + NAV_BUTTON_SIZE + NAV_GAP
-                + labelWidth + NAV_GAP + NAV_BUTTON_SIZE + NAV_GAP + NAV_JUMP_WIDTH + padding * 2;
-        int baseHeight = NAV_BUTTON_SIZE + padding * 2;
-
-        // Scale the whole pill down so it fits under the panel within the screen.
-        int availableBelow = screenHeight - 2 - (panelY + panelHeight + 6);
+        int availableBelow = screenHeight - 2 - (panelY + panelHeight + PILL_GAP_BELOW_PANEL);
         float fitH = availableBelow >= baseHeight ? 1.0f : Math.max(0.4f, (float) availableBelow / baseHeight);
         float fitW = baseWidth <= panelWidth ? 1.0f : Math.max(0.4f, (float) panelWidth / baseWidth);
         navScale = Math.min(fitH, fitW);
@@ -377,19 +402,78 @@ public class ChangelogViewer extends Screen {
         navBarWidth = scaledW;
         navBarHeight = scaledH;
         navBarX = panelX + (panelWidth - scaledW) / 2;
-        navBarY = panelY + panelHeight + 6;
+        navBarY = panelY + panelHeight + PILL_GAP_BELOW_PANEL;
 
         PoseStack pose = graphics.pose();
         pose.pushPose();
         pose.translate(navBarX, navBarY, 0);
         pose.scale(navScale, navScale, 1.0f);
 
-        // From here everything is drawn in base (unscaled) coords relative to the pill origin.
         graphics.fill(0, 0, baseWidth, baseHeight, 0xE61A1A1A);
         graphics.fill(0, 0, baseWidth, 1, 0x99FFAA66);
         graphics.fill(0, baseHeight - 1, baseWidth, baseHeight, 0x99FF8833);
         graphics.fill(0, 0, 1, baseHeight, 0x99FFAA66);
         graphics.fill(baseWidth - 1, 0, baseWidth, baseHeight, 0x99FF8833);
+    }
+
+    private void renderAnnouncementBar(GuiGraphics graphics, int mouseX, int mouseY) {
+        if (announcement == null || announcementCloseButton == null) {
+            return;
+        }
+
+        int labelWidth = this.font.width(DONT_SHOW_AGAIN);
+        int baseWidth = PILL_PADDING + CHECKBOX_SIZE + NAV_GAP + labelWidth + NAV_GAP * 4 + CLOSE_BUTTON_WIDTH + PILL_PADDING;
+        int baseHeight = NAV_BUTTON_SIZE + PILL_PADDING * 2;
+        beginPill(graphics, baseWidth, baseHeight);
+
+        int boxY = PILL_PADDING + (NAV_BUTTON_SIZE - CHECKBOX_SIZE) / 2;
+        graphics.fill(PILL_PADDING, boxY, PILL_PADDING + CHECKBOX_SIZE, boxY + CHECKBOX_SIZE, CHECKBOX_BORDER_COLOR);
+        graphics.fill(PILL_PADDING + 1, boxY + 1, PILL_PADDING + CHECKBOX_SIZE - 1, boxY + CHECKBOX_SIZE - 1, CHECKBOX_FILL_COLOR);
+        if (dontShowAgain) {
+            graphics.fill(PILL_PADDING + CHECKBOX_TICK_INSET, boxY + CHECKBOX_TICK_INSET,
+                    PILL_PADDING + CHECKBOX_SIZE - CHECKBOX_TICK_INSET, boxY + CHECKBOX_SIZE - CHECKBOX_TICK_INSET, CHECKBOX_TICK_COLOR);
+        }
+        int textY = PILL_PADDING + (NAV_BUTTON_SIZE - this.font.lineHeight + 1) / 2;
+        graphics.drawString(this.font, DONT_SHOW_AGAIN, PILL_PADDING + CHECKBOX_SIZE + NAV_GAP, textY, 0xFFDD99, false);
+
+        announcementCloseButton.setPosition(baseWidth - PILL_PADDING - CLOSE_BUTTON_WIDTH, PILL_PADDING);
+        int localMouseX = (int) ((mouseX - navBarX) / navScale);
+        int localMouseY = (int) ((mouseY - navBarY) / navScale);
+        announcementCloseButton.render(graphics, localMouseX, localMouseY, 0);
+
+        graphics.pose().popPose();
+    }
+
+    private boolean announcementClickAt(double mx, double my) {
+        if (announcement == null || announcementCloseButton == null || navScale <= 0 || !isPointInNavBar(mx, my)) {
+            return false;
+        }
+        int localX = (int) ((mx - navBarX) / navScale);
+        int localY = (int) ((my - navBarY) / navScale);
+        if (announcementCloseButton.isMouseOver(localX, localY)) {
+            announcementCloseButton.onPress();
+        } else if (localX < announcementCloseButton.getX()) {
+            dontShowAgain = !dontShowAgain;
+        }
+        return true;
+    }
+
+    private void renderNavBar(GuiGraphics graphics) {
+        if (navPrevButton == null || cachedHistory == null || cachedHistory.isEmpty()) {
+            return;
+        }
+
+        String label = buildNavLabel();
+        int textWidth = this.font.width(label);
+
+        int padding = PILL_PADDING;
+        int labelWidth = Math.max(textWidth + 8, 60);
+        int baseWidth = NAV_JUMP_WIDTH + NAV_GAP + NAV_BUTTON_SIZE + NAV_GAP
+                + labelWidth + NAV_GAP + NAV_BUTTON_SIZE + NAV_GAP + NAV_JUMP_WIDTH + padding * 2;
+        int baseHeight = NAV_BUTTON_SIZE + padding * 2;
+
+        beginPill(graphics, baseWidth, baseHeight);
+        PoseStack pose = graphics.pose();
 
         int btnY = padding;
         int lx = padding;
@@ -415,7 +499,7 @@ public class ChangelogViewer extends Screen {
     }
 
     private boolean navClickAt(double mx, double my) {
-        if (navScale <= 0 || !isPointInNavBar(mx, my)) {
+        if (navPrevButton == null || navScale <= 0 || !isPointInNavBar(mx, my)) {
             return false;
         }
         int localX = (int) ((mx - navBarX) / navScale);
@@ -467,6 +551,7 @@ public class ChangelogViewer extends Screen {
 
         renderChangelogPanel(graphics, mouseX, mouseY, partialTick);
         renderNavBar(graphics);
+        renderAnnouncementBar(graphics, mouseX, mouseY);
 
         graphics.pose().popPose();
     }
@@ -727,7 +812,7 @@ public class ChangelogViewer extends Screen {
     
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (button == 0 && navClickAt(mouseX, mouseY)) {
+        if (button == 0 && (navClickAt(mouseX, mouseY) || announcementClickAt(mouseX, mouseY))) {
             return true;
         }
 
@@ -837,7 +922,8 @@ public class ChangelogViewer extends Screen {
         try {
             ResourceLocation texture = getOrLoadTexture(line.imageUrl);
             if (texture == null) {
-                String loadingText = line.linkUrl != null ? "[Loading image... (clickable link)]": "[Loading image...]";
+                String loadingText = failedImages.contains(line.imageUrl) ? IMAGE_LOAD_ERROR
+                        : line.linkUrl != null ? "[Loading image... (clickable link)]" : "[Loading image...]";
                 graphics.drawString(this.font, loadingText, x, y, (alpha << 24) | 0x888888, false);
                 return LINE_HEIGHT + IMAGE_SPACING;
             }
@@ -875,170 +961,81 @@ public class ChangelogViewer extends Screen {
             
             return imgHeight + IMAGE_SPACING;
         } catch (Exception e) {
-            graphics.drawString(this.font, "[Image load error]", x, y, (alpha << 24) | 0xFF0000, false);
+            graphics.drawString(this.font, IMAGE_LOAD_ERROR, x, y, (alpha << 24) | 0xFF0000, false);
             return LINE_HEIGHT + IMAGE_SPACING;
         }
     }
     
     private ResourceLocation getOrLoadTexture(String url) {
+        Optional<AnimatedTexture> animated = AnimatedTexture.find(url);
+        if (animated.isPresent()) {
+            imageDimensions.putIfAbsent(url, new ImageData(animated.get().width(), animated.get().height()));
+            return animated.get().tick();
+        }
         if (imageCache.containsKey(url)) {
             return imageCache.get(url);
         }
-        
+        if (failedImages.contains(url) || !startLoading(url)) {
+            return null;
+        }
+
         String hash = String.valueOf(url.hashCode()).replace("-", "_");
         ResourceLocation location = ResourceLocation.fromNamespaceAndPath("cthulib", "textures/changelog/" + hash + ".png");
-        
         File cacheDir = new File(minecraft.gameDirectory, "cthulib_cache/images");
-        cacheDir.mkdirs();
-        File cacheFile = new File(cacheDir, hash + ".png");
-        
-        if (cacheFile.exists()) {
+
+        Util.ioPool().execute(() -> {
             try {
-                FileInputStream fis = new FileInputStream(cacheFile);
-                BufferedImage bufferedImage = ImageIO.read(fis);
-                fis.close();
-                
-                if (bufferedImage != null) {
-                    imageDimensions.put(url, new ImageData(bufferedImage.getWidth(), bufferedImage.getHeight()));
-                    
-                    NativeImage nativeImage = convertBufferedImageToNativeImage(bufferedImage);
-                    
-                    DynamicTexture dynamicTexture = new DynamicTexture(nativeImage);
-                    minecraft.getTextureManager().register(location, dynamicTexture);
-                    imageCache.put(url, location);
-                    return location;
-                } else {
-                    cacheFile.delete();
+                Optional<File> file = ImageCache.prefetch(url, cacheDir, hash);
+                if (file.isEmpty()) {
+                    markFailed(url);
+                    return;
+                }
+                if (!loadImage(url, location, Files.readAllBytes(file.get().toPath()))) {
+                    file.get().delete();
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-                cacheFile.delete();
-            }
-        }
-        
-        synchronized (downloadingImages) {
-            if (downloadingImages.getOrDefault(url, false)) {
-                return null;
-            }
-            downloadingImages.put(url, true);
-        }
-        
-        Util.ioPool().execute(() -> {
-            try {
-                URL imageUrl = new URL(url);
-                HttpURLConnection connection = (HttpURLConnection) imageUrl.openConnection();
-                connection.setRequestProperty("User-Agent", "Mozilla/5.0");
-                connection.connect();
-                
-                if (connection.getResponseCode() != 200) {
-                    synchronized (downloadingImages) {
-                        downloadingImages.put(url, false);
-                    }
-                    return;
-                }
-                
-                File tempFile = new File(cacheDir, hash + "_" + System.currentTimeMillis() + ".tmp");
-                InputStream inputStream = connection.getInputStream();
-                Files.copy(inputStream, tempFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                inputStream.close();
-                
-                BufferedImage bufferedImage = null;
-                
-                if (url.toLowerCase().endsWith(".webp")) {
-                    try {
-                        ImageIO.scanForPlugins();
-                        FileInputStream fis = new FileInputStream(tempFile);
-                        bufferedImage = ImageIO.read(fis);
-                        fis.close();
-                    } catch (Exception e) {
-                    }
-                }
-                
-                if (bufferedImage == null) {
-                    try {
-                        FileInputStream fis = new FileInputStream(tempFile);
-                        bufferedImage = ImageIO.read(fis);
-                        fis.close();
-                    } catch (Exception e) {
-                    }
-                }
-                
-                tempFile.delete();
-                
-                if (bufferedImage == null) {
-                    synchronized (downloadingImages) {
-                        downloadingImages.put(url, false);
-                    }
-                    return;
-                }
-                
-                final int originalWidth = bufferedImage.getWidth();
- final int originalHeight = bufferedImage.getHeight();
-                imageDimensions.put(url, new ImageData(originalWidth, originalHeight));
-                
-                FileOutputStream fos = new FileOutputStream(cacheFile);
-                boolean success = ImageIO.write(bufferedImage, "png", fos);
-                fos.close();
-                
-                if (!success) {
-                    cacheFile.delete();
-                    synchronized (downloadingImages) {
-                        downloadingImages.put(url, false);
-                    }
-                    return;
-                }
-                
-                minecraft.execute(() -> {
-                    try {
-                        FileInputStream fis = new FileInputStream(cacheFile);
-                        NativeImage nativeImage = NativeImage.read(fis);
-                        fis.close();
-                        
-                        DynamicTexture dynamicTexture = new DynamicTexture(nativeImage);
-                        minecraft.getTextureManager().register(location, dynamicTexture);
-                        imageCache.put(url, location);
-                        calculateMaxScroll();
-                        synchronized (downloadingImages) {
-                            downloadingImages.put(url, false);
-                        }
-                    } catch (Exception e) {
-                        cacheFile.delete();
-                        synchronized (downloadingImages) {
-                            downloadingImages.put(url, false);
-                        }
-                    }
-                });
-            } catch (Exception e) {
-                synchronized (downloadingImages) {
-                    downloadingImages.put(url, false);
-                }
+                markFailed(url);
             }
         });
-        
+
         return null;
     }
 
-    private static NativeImage convertBufferedImageToNativeImage(BufferedImage bufferedImage) {
-        int width = bufferedImage.getWidth();
-        int height = bufferedImage.getHeight();
-        NativeImage nativeImage = new NativeImage(width, height, false);
-        
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                int argb = bufferedImage.getRGB(x, y);
-                nativeImage.setPixelRGBA(x, y, convertARGBtoABGR(argb));
+    private boolean loadImage(String url, ResourceLocation location, byte[] bytes) {
+        return RawImageTextures.load(url, location, bytes, loaded -> {
+            if (loaded.isEmpty()) {
+                markFailed(url);
+                return;
             }
-        }
-        
-        return nativeImage;
+            imageDimensions.put(url, new ImageData(loaded.get().width(), loaded.get().height()));
+            if (!loaded.get().animated()) {
+                imageCache.put(url, location);
+            }
+            calculateMaxScroll();
+            finishLoading(url);
+        });
     }
 
-    private static int convertARGBtoABGR(int argb) {
-        int a = (argb >> 24) & 0xFF;
-        int r = (argb >> 16) & 0xFF;
-        int g = (argb >> 8) & 0xFF;
-        int b = argb & 0xFF;
-        return (a << 24) | (b << 16) | (g << 8) | r;
+    private boolean startLoading(String url) {
+        synchronized (downloadingImages) {
+            if (downloadingImages.getOrDefault(url, false)) {
+                return false;
+            }
+            downloadingImages.put(url, true);
+            return true;
+        }
+    }
+
+    private void finishLoading(String url) {
+        synchronized (downloadingImages) {
+            downloadingImages.put(url, false);
+        }
+    }
+
+    private void markFailed(String url) {
+        failedImages.add(url);
+        finishLoading(url);
     }
 
     private static class ImageData {

@@ -123,7 +123,7 @@ public class CthuLibConfigScreen extends Screen {
             this.minecraft.setScreen(new CthuLibConfigScreen(parent));
         });
         yPos += ENTRY_HEIGHT;
-        addTextField("Promo Texture", "e.g., cthulib:textures/gui/promo_button.png", config.promoButtonTexture, val -> config.promoButtonTexture = val, leftX, yPos);
+        addTextField("Promo Texture", "e.g., cthulib:textures/gui/promo_button.png (.gif/.webp animate)", config.promoButtonTexture, val -> config.promoButtonTexture = val, leftX, yPos);
         yPos += ENTRY_HEIGHT;
         addTextField("Promo Tooltip", "e.g., Need a Server?", config.promoButtonTooltip, val -> config.promoButtonTooltip = val, leftX, yPos);
         yPos += ENTRY_HEIGHT;
@@ -193,6 +193,8 @@ public class CthuLibConfigScreen extends Screen {
         addTextField("Panel Texture", "e.g., cthulib:textures/gui/panel.png", config.changelogPanelTexture, val -> config.changelogPanelTexture = val, leftX, yPos);
         yPos += ENTRY_HEIGHT;
         addCheckbox("Show Notification Badge", config.showChangelogNotification, val -> config.showChangelogNotification = val, leftX, yPos);
+        yPos += ENTRY_HEIGHT;
+        addCheckbox("Show Update Popup", config.showUpdateAnnouncement, val -> config.showUpdateAnnouncement = val, leftX, yPos);
         yPos += ENTRY_HEIGHT;
         addTextField("Version Pattern", "e.g., Fantasy MC [1.21.1]-{version} [BETA]", config.changelogVersionPattern, val -> config.changelogVersionPattern = val, leftX, yPos);
 

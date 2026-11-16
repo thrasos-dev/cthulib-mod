@@ -6,8 +6,6 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.pixeldreamstudios.cthulib.client.ModData;
 import net.pixeldreamstudios.cthulib.client.ModIconLoader;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
@@ -55,22 +53,8 @@ public class ModIconLoaderFabric {
 
 
                     for (String pathStr : pathsToTry) {
-                        try {
-                            Path iconFilePath = root.resolve(pathStr);
-                            if (Files.exists(iconFilePath)) {
-                                try (InputStream is = Files.newInputStream(iconFilePath)) {
-                                    BufferedImage bi = ImageIO.read(is);
-                                    if (bi != null) {
-                                        var rl = ModIconLoader.registerIcon(mod.modId, bi);
-                                        if (rl != null) {
-                                            callback.onIconLoaded(rl);
-                                            return;
-                                        }
-                                    }
-                                }
-                            }
-                        } catch (Exception e) {
-
+                        if (ModIconLoader.tryRegisterIcon(mod.modId, root, pathStr, callback)) {
+                            return;
                         }
                     }
 

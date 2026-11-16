@@ -21,6 +21,7 @@ import net.pixeldreamstudios.cthulib.client.QuickConfigPanel;
 import net.pixeldreamstudios.cthulib.client.UIElementPositionManager;
 import net.pixeldreamstudios.cthulib.config.CthuLibConfig;
 import net.pixeldreamstudios.cthulib.util.ChangelogCache;
+import net.pixeldreamstudios.cthulib.util.UpdateAnnouncement;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -247,6 +248,17 @@ public abstract class TitleScreenMixin extends Screen {
         if (DevModeManager.checkDevModeKeybind()) {
             DevModeManager.toggleDevMode();
         }
+        if (!cthulib$changelogOpen && CthuLibConfig.get().showInTitleScreen) {
+            UpdateAnnouncement.takePending().ifPresent(announcement -> cthulib$openAnnouncement(announcement));
+        }
+    }
+
+    @Unique
+    private void cthulib$openAnnouncement(UpdateAnnouncement.Announcement announcement) {
+        cthulib$changelogOverlay = new ChangelogViewer(this, announcement, () -> cthulib$closeChangelogOverlay());
+        cthulib$changelogOverlay.init(Minecraft.getInstance(), this.width, this.height);
+        cthulib$changelogOverlay.resetAnimation();
+        cthulib$changelogOpen = true;
     }
 
     @Unique
@@ -472,5 +484,9 @@ public abstract class TitleScreenMixin extends Screen {
     @Unique
     private void cthulib$closeChangelogOverlay() {
         cthulib$changelogOpen = false;
+        if (cthulib$changelogOverlay != null && cthulib$changelogOverlay.isAnnouncement()) {
+            cthulib$changelogOverlay.finishAnnouncement();
+            cthulib$changelogOverlay = null;
+        }
     }
 }

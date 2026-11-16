@@ -246,7 +246,10 @@ public class ModListWidget extends ObjectSelectionList<ModListWidget.ModRow> {
 
                 RenderSystem.enableBlend();
                 RenderSystem.setShaderColor(1f, 1f, 1f, loadProgress);
-                gfx.blit(icon, iconX, iconY, 0, 0, ICON_SIZE, ICON_SIZE, ICON_SIZE, ICON_SIZE);
+                ResourceLocation drawnIcon = RawImageTextures.resolve(icon);
+                if (drawnIcon != null) {
+                    gfx.blit(drawnIcon, iconX, iconY, 0, 0, ICON_SIZE, ICON_SIZE, ICON_SIZE, ICON_SIZE);
+                }
                 RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
 
                 int iconBorderColor = selectProgress > 0.5f ?

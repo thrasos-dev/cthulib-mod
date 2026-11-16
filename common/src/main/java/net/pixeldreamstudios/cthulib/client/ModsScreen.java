@@ -1,35 +1,31 @@
 package net.pixeldreamstudios.cthulib.client;
 
-import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.Util;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceLocation;
 import net.pixeldreamstudios.cthulib.config.CthuLibConfig;
+import net.pixeldreamstudios.cthulib.util.CthuLibLogger;
 
-import javax.imageio.ImageIO;
-import java.awt.*;
-import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
+import java.util.Optional;
 
 public class ModsScreen extends Screen {
     private final Screen parentScreen;
     private ModListWidget modList;
-    private DynamicTexture logoTex;
     private ResourceLocation logoLoc;
-    private DynamicTexture wikiLogoTex;
     private ResourceLocation wikiLogoLoc;
-    private DynamicTexture discordLogoTex;
     private ResourceLocation discordLogoLoc;
-    private DynamicTexture backgroundTex;
+    private int backgroundWidth;
+    private int backgroundHeight;
     private ResourceLocation backgroundLoc;
     private int logoW, logoH;
     private List<ModData> mods;
@@ -42,6 +38,9 @@ public class ModsScreen extends Screen {
     private static final int LOGO_MAX_WITHOUT_NAME = 64;
     private static final int HEADER_HEIGHT = 78;
     private static final int MAX_TEXTURE_SIZE = 2048;
+    private static final String BUTTON_LOGO_KEY = "mods_screen_button_";
+    private static final String LOGO_KEY = "mods_screen_logo_";
+    private static final String BACKGROUND_KEY = "mods_screen_background_";
     private static List<ModData> cachedMods = null;
     private static ModListWidget cachedModList = null;
     private static int lastScreenWidth = -1;
@@ -139,180 +138,99 @@ public class ModsScreen extends Screen {
     }
 
     private void loadButtonLogoAsync(String path, int x, int y, String link, String label, UIElementPositionManager.ElementType placed) {
-        CompletableFuture.supplyAsync(() -> {
-            try {
-                ResourceLocation rl = ResourceLocation.parse(path);
-                InputStream is = minecraft.getResourceManager().getResource(rl).orElseThrow().open();
-                BufferedImage img = ImageIO.read(is);
-                is.close();
-                return img;
-            } catch (Exception e) {
-                return null;
+        String key = BUTTON_LOGO_KEY + path;
+        Util.ioPool().execute(() -> {
+            Optional<byte[]> bytes = readImageBytes(path, false);
+            if (bytes.isEmpty()) {
+                minecraft.execute(() -> addTextLinkButton(x, y, link, label));
+                return;
             }
-        }).thenAcceptAsync(img -> {
-            if (img != null) {
-                NativeImage ni =
-                        new NativeImage(img.getWidth(), img.getHeight(), true);
-
-                for (int iy = 0; iy < img.getHeight(); iy++) {
-                    for (int ix = 0; ix < img.getWidth(); ix++) {
-                        int argb = img.getRGB(ix, iy);
-                        ni.setPixelRGBA(ix, iy,
-                                ((argb & 0xFF000000)) |
-                                        ((argb & 0xFF) << 16) |
-                                        ((argb & 0xFF00)) |
-                                        ((argb & 0xFF0000) >> 16));
-                    }
+            RawImageTextures.load(key, RawImageTextures.locationFor(key), bytes.get(), loaded -> {
+                if (loaded.isPresent()) {
+                    addLogoLinkButton(loaded.get().location(), x, y, link, label, placed);
+                } else {
+                    addTextLinkButton(x, y, link, label);
                 }
+            });
+        });
+    }
 
-                DynamicTexture dt = new DynamicTexture(ni);
-                ResourceLocation loc = minecraft.getTextureManager().register("cthulib_button_" + path.hashCode(), dt);
+    private void addLogoLinkButton(ResourceLocation loc, int x, int y, String link, String label, UIElementPositionManager.ElementType placed) {
+        if (label.equals("Wiki")) {
+            wikiLogoLoc = loc;
+        } else if (label.equals("Discord")) {
+            discordLogoLoc = loc;
+        }
 
-                if (label.equals("Wiki")) {
-                    wikiLogoLoc = loc;
-                    wikiLogoTex = dt;
-                } else if (label.equals("Discord")) {
-                    discordLogoLoc = loc;
-                    discordLogoTex = dt;
-                }
+        UIElementPositionManager.ElementType kind = label.equals("Wiki") ? UIElementPositionManager.ElementType.WIKI_BUTTON
+                : UIElementPositionManager.ElementType.DISCORD_BUTTON;
+        Placement.Spec size = kind.access().spec(CthuLibConfig.getInstance());
+        ModListButton linkButton = new ModListButton(x, y, size.width(), size.height(),
+                loc,
+                b -> Util.getPlatform().openUri(link),
+                Component.literal(label),
+                placed);
+        linkButton.fancyMenuId(kind.fancyMenuId());
+        addRenderableWidget(linkButton);
+    }
 
-                UIElementPositionManager.ElementType kind = label.equals("Wiki") ? UIElementPositionManager.ElementType.WIKI_BUTTON
-                        : UIElementPositionManager.ElementType.DISCORD_BUTTON;
-                Placement.Spec size = kind.access().spec(CthuLibConfig.getInstance());
-                ModListButton linkButton = new ModListButton(x, y, size.width(), size.height(),
-                        loc,
-                        b -> Util.getPlatform().openUri(link),
-                        Component.literal(label),
-                        placed);
-                linkButton.fancyMenuId(kind.fancyMenuId());
-                addRenderableWidget(linkButton);
-            } else {
-                String emoji = label.equals("Wiki") ? "📚" : "💬";
-                addRenderableWidget(Button.builder(Component.literal(emoji + " " + label),
-                                b -> Util.getPlatform().openUri(link))
-                        .bounds(x, y, 80, 20).build());
-            }
-        }, minecraft);
+    private void addTextLinkButton(int x, int y, String link, String label) {
+        String emoji = label.equals("Wiki") ? "📚" : "💬";
+        addRenderableWidget(Button.builder(Component.literal(emoji + " " + label),
+                        b -> Util.getPlatform().openUri(link))
+                .bounds(x, y, 80, 20).build());
     }
 
     private void loadLogoAsync() {
         CthuLibConfig cfg = CthuLibConfig.get();
         if (cfg.logoPath.isEmpty()) return;
 
-        CompletableFuture.supplyAsync(() -> {
-            try {
-                BufferedImage img = null;
-
-                try {
-                    ResourceLocation rl = ResourceLocation.parse(cfg.logoPath);
-                    try (InputStream is = minecraft.getResourceManager().getResource(rl).orElseThrow().open()) {
-                        img = ImageIO.read(is);
-                    }
-                } catch (Exception e) {
-                    File f = new File(minecraft.gameDirectory, cfg.logoPath);
-                    if (f.exists()) {
-                        img = ImageIO.read(f);
-                    }
-                }
-
-                return img;
-            } catch (Exception e) {
-                e.printStackTrace();
-                return null;
-            }
-        }).thenAcceptAsync(img -> {
-            if (img == null) return;
-
-            int maxSize = (cfg.showName && !  cfg.name.isEmpty())
-                    ?  LOGO_MAX_WITH_NAME
-                    :    LOGO_MAX_WITHOUT_NAME;
-
-            float scale = Math.min(1f, (float) maxSize / img.getHeight());
-            logoW = (int) (img.getWidth() * scale);
-            logoH = (int) (img.getHeight() * scale);
-
-            NativeImage ni =
-                    new NativeImage(img.getWidth(), img.getHeight(), true);
-
-            for (int y = 0; y < img.getHeight(); y++) {
-                for (int x = 0; x < img.getWidth(); x++) {
-                    int argb = img.getRGB(x, y);
-                    ni.setPixelRGBA(x, y,
-                            ((argb & 0xFF000000)) |
-                                    ((argb & 0xFF) << 16) |
-                                    ((argb & 0xFF00)) |
-                                    ((argb & 0xFF0000) >> 16));
-                }
-            }
-
-            logoTex = new DynamicTexture(ni);
-            logoLoc = minecraft.getTextureManager().register("cthulib_logo", logoTex);
-        }, minecraft);
+        String key = LOGO_KEY + cfg.logoPath;
+        int maxSize = (cfg.showName && !cfg.name.isEmpty()) ? LOGO_MAX_WITH_NAME : LOGO_MAX_WITHOUT_NAME;
+        Util.ioPool().execute(() -> readImageBytes(cfg.logoPath, true).ifPresent(bytes ->
+                RawImageTextures.load(key, RawImageTextures.locationFor(key), bytes, loaded -> loaded.ifPresent(result -> {
+                    float scale = Math.min(1f, (float) maxSize / result.height());
+                    logoW = (int) (result.width() * scale);
+                    logoH = (int) (result.height() * scale);
+                    logoLoc = result.location();
+                }))));
     }
 
     private void loadBackgroundAsync() {
         CthuLibConfig cfg = CthuLibConfig.get();
         if (cfg.backgroundPath.isEmpty()) return;
 
-        CompletableFuture.supplyAsync(() -> {
-            try {
-                BufferedImage img = null;
+        String key = BACKGROUND_KEY + cfg.backgroundPath;
+        Util.ioPool().execute(() -> readImageBytes(cfg.backgroundPath, true).ifPresent(bytes ->
+                RawImageTextures.load(key, RawImageTextures.locationFor(key), bytes, MAX_TEXTURE_SIZE, loaded -> loaded.ifPresent(result -> {
+                    backgroundWidth = result.width();
+                    backgroundHeight = result.height();
+                    backgroundLoc = result.location();
+                }))));
+    }
 
+    private Optional<byte[]> readImageBytes(String path, boolean allowGameFile) {
+        ResourceLocation location = ResourceLocation.tryParse(path);
+        if (location != null) {
+            try (InputStream in = minecraft.getResourceManager().open(location)) {
+                return Optional.of(in.readAllBytes());
+            } catch (IOException e) {
+                if (!allowGameFile) {
+                    CthuLibLogger.error("Could not read image " + path + ": " + e.getMessage());
+                }
+            }
+        }
+        if (allowGameFile) {
+            File file = new File(minecraft.gameDirectory, path);
+            if (file.exists()) {
                 try {
-                    ResourceLocation rl = ResourceLocation.parse(cfg.backgroundPath);
-                    try (InputStream is = minecraft.getResourceManager().getResource(rl).orElseThrow().open()) {
-                        img = ImageIO.read(is);
-                    }
-                } catch (Exception e) {
-                    File f = new File(minecraft.gameDirectory, cfg.backgroundPath);
-                    if (f.exists()) {
-                        img = ImageIO.read(f);
-                    }
-                }
-
-                if (img == null) return null;
-
-                int originalW = img.getWidth();
-                int originalH = img.getHeight();
-
-                if (originalW > MAX_TEXTURE_SIZE || originalH > MAX_TEXTURE_SIZE) {
-                    float scale = Math.min((float) MAX_TEXTURE_SIZE / originalW, (float) MAX_TEXTURE_SIZE / originalH);
-                    int newW = (int) (originalW * scale);
-                    int newH = (int) (originalH * scale);
-
-                    BufferedImage scaledImg = new BufferedImage(newW, newH, BufferedImage.TYPE_INT_ARGB);
-                    Graphics2D g2d = scaledImg.createGraphics();
-                    g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-                    g2d.drawImage(img, 0, 0, newW, newH, null);
-                    g2d.dispose();
-                    img = scaledImg;
-                }
-
-                return img;
-            } catch (Exception e) {
-                e.printStackTrace();
-                return null;
-            }
-        }).thenAcceptAsync(img -> {
-            if (img == null) return;
-
-            NativeImage ni =
-                    new NativeImage(img.getWidth(), img.getHeight(), true);
-
-            for (int y = 0; y < img.getHeight(); y++) {
-                for (int x = 0; x < img.getWidth(); x++) {
-                    int argb = img.getRGB(x, y);
-                    ni.setPixelRGBA(x, y,
-                            ((argb & 0xFF000000)) |
-                                    ((argb & 0xFF) << 16) |
-                                    ((argb & 0xFF00)) |
-                                    ((argb & 0xFF0000) >> 16));
+                    return Optional.of(Files.readAllBytes(file.toPath()));
+                } catch (IOException e) {
+                    CthuLibLogger.error("Could not read image " + path + ": " + e.getMessage());
                 }
             }
-
-            backgroundTex = new DynamicTexture(ni);
-            backgroundLoc = minecraft.getTextureManager().register("cthulib_background", backgroundTex);
-        }, minecraft);
+        }
+        return Optional.empty();
     }
 
     public void showModDetail(ModData mod) {
@@ -325,14 +243,15 @@ public class ModsScreen extends Screen {
 
     @Override
     public void renderBackground(GuiGraphics gfx, int mouseX, int mouseY, float partialTick) {
-        if (backgroundLoc != null && backgroundTex != null && backgroundTex.getPixels() != null) {
-            RenderSystem.setShaderTexture(0, backgroundLoc);
+        ResourceLocation background = RawImageTextures.resolve(backgroundLoc);
+        if (background != null) {
+            RenderSystem.setShaderTexture(0, background);
             RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
             RenderSystem.enableBlend();
             RenderSystem.defaultBlendFunc();
 
-            int texWidth = backgroundTex.getPixels().getWidth();
-            int texHeight = backgroundTex.getPixels().getHeight();
+            int texWidth = backgroundWidth;
+            int texHeight = backgroundHeight;
 
             float scaleX = (float) width / texWidth;
             float scaleY = (float) height / texHeight;
@@ -347,7 +266,7 @@ public class ModsScreen extends Screen {
             gfx.pose().translate(offsetX, offsetY, 0);
             gfx.pose().scale(scale, scale, 1.0f);
 
-            gfx.blit(backgroundLoc, 0, 0, 0, 0, texWidth, texHeight, texWidth, texHeight);
+            gfx.blit(background, 0, 0, 0, 0, texWidth, texHeight, texWidth, texHeight);
 
             gfx.pose().popPose();
 
@@ -374,9 +293,10 @@ public class ModsScreen extends Screen {
             int cx = width / 2;
             int cy = 12;
 
-            if (! cfg.logoPath.isEmpty() && logoTex != null && logoLoc != null) {
+            ResourceLocation logo = RawImageTextures.resolve(logoLoc);
+            if (! cfg.logoPath.isEmpty() && logo != null) {
                 RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
-                gfx.blit(logoLoc, cx - logoW / 2, cy, 0, 0, logoW, logoH, logoW, logoH);
+                gfx.blit(logo, cx - logoW / 2, cy, 0, 0, logoW, logoH, logoW, logoH);
                 cy += logoH + 4;
             }
 
@@ -457,22 +377,10 @@ public class ModsScreen extends Screen {
 
     @Override
     public void onClose() {
-        if (logoTex != null && logoLoc != null) {
-            minecraft.getTextureManager().release(logoLoc);
-            logoTex.close();
-        }
-        if (wikiLogoLoc != null && wikiLogoTex != null) {
-            minecraft.getTextureManager().release(wikiLogoLoc);
-            wikiLogoTex.close();
-        }
-        if (discordLogoLoc != null && discordLogoTex != null) {
-            minecraft.getTextureManager().release(discordLogoLoc);
-            discordLogoTex.close();
-        }
-        if (backgroundTex != null && backgroundLoc != null) {
-            minecraft.getTextureManager().release(backgroundLoc);
-            backgroundTex.close();
-        }
+        RawImageTextures.release(logoLoc);
+        RawImageTextures.release(wikiLogoLoc);
+        RawImageTextures.release(discordLogoLoc);
+        RawImageTextures.release(backgroundLoc);
         minecraft.setScreen(parentScreen);
     }
 

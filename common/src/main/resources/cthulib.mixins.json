@@ -6,7 +6,8 @@
   "client": [
     "client.TitleScreenMixin",
     "client.OptionsScreenMixin",
-    "client.OptionsMixin"
+    "client.OptionsMixin",
+    "client.ReloadableResourceManagerMixin"
   ],
   "mixins": [
   ],

@@ -1,14 +1,15 @@
 package net.pixeldreamstudios.cthulib.client;
 
-import com.mojang.blaze3d.platform.NativeImage;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.ResourceLocation;
 
-import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
 import java.util.function.BiConsumer;
 
 public class ModIconLoader {
+    private static final String ICON_KEY_PREFIX = "mod_icon_";
     private static BiConsumer<ModData, IconCallback> implementation = null;
 
     public static void setImplementation(BiConsumer<ModData, IconCallback> impl) {
@@ -22,27 +23,18 @@ public class ModIconLoader {
         }
         implementation.accept(mod, callback);
     }
-    public static ResourceLocation registerIcon(String modId, BufferedImage img) {
+
+    public static boolean tryRegisterIcon(String modId, Path base, String relativePath, IconCallback callback) {
         try {
-            NativeImage ni =
-                    new NativeImage(img.getWidth(), img.getHeight(), true);
-
-            for (int y = 0; y < img.getHeight(); y++) {
-                for (int x = 0; x < img.getWidth(); x++) {
-                    int rgb = img.getRGB(x, y);
-                    ni.setPixelRGBA(x, y,
-                            (rgb & 0xFF000000) |
-                                    ((rgb & 0xFF) << 16) |
-                                    (rgb & 0xFF00) |
-                                    ((rgb & 0xFF0000) >> 16));
-                }
+            Path path = base.resolve(relativePath);
+            if (!Files.exists(path)) {
+                return false;
             }
-
-            DynamicTexture dt = new DynamicTexture(ni);
-            return Minecraft.getInstance().getTextureManager()
-                    .register("cthulib_mod_" + modId, dt);
-        } catch (Exception e) {
-            return null;
+            String key = ICON_KEY_PREFIX + modId;
+            return RawImageTextures.load(key, RawImageTextures.locationFor(key), Files.readAllBytes(path),
+                    loaded -> loaded.ifPresent(result -> callback.onIconLoaded(result.location())));
+        } catch (IOException | InvalidPathException e) {
+            return false;
         }
     }
 

@@ -69,7 +69,10 @@ public class PromoButton extends DraggableTitleScreenWidget {
         RenderSystem.enableBlend();
         RenderSystem.setShaderColor(brightness, brightness, brightness, this.alpha);
 
-        graphics.blit(texture, this.getX(), this.getY(), 0, 0, this.width, this.height, this.width, this.height);
+        ResourceLocation drawn = RawImageTextures.resolve(texture);
+        if (drawn != null) {
+            graphics.blit(drawn, this.getX(), this.getY(), 0, 0, this.width, this.height, this.width, this.height);
+        }
 
         if (shineCfg.shineEffectEnabled) ShineEffect.renderShine(graphics, this.getX(), this.getY(), this.width, this.height, glowAnimation, hoverAnimation);
 
@@ -93,7 +96,7 @@ public class PromoButton extends DraggableTitleScreenWidget {
                 try (InputStream in = connection.getInputStream()) {
                     BufferedImage bufferedImage = ImageIO.read(in);
                     if (bufferedImage != null) {
-                        NativeImage nativeImage = convertToNativeImage(bufferedImage);
+                        NativeImage nativeImage = RawImageTextures.toNativeImage(bufferedImage);
                         Minecraft.getInstance().execute(() -> {
                             DynamicTexture dynamicTexture = new DynamicTexture(nativeImage);
                             this.texture = Minecraft.getInstance().getTextureManager()
@@ -110,25 +113,6 @@ public class PromoButton extends DraggableTitleScreenWidget {
         loadThread.start();
     }
 
-    private NativeImage convertToNativeImage(BufferedImage bufferedImage) {
-        int width = bufferedImage.getWidth();
-        int height = bufferedImage.getHeight();
-        NativeImage nativeImage = new NativeImage(width, height, true);
-
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                int argb = bufferedImage.getRGB(x, y);
-                int a = (argb >> 24) & 0xFF;
-                int r = (argb >> 16) & 0xFF;
-                int g = (argb >> 8) & 0xFF;
-                int b = argb & 0xFF;
-                int abgr = (a << 24) | (b << 16) | (g << 8) | r;
-                nativeImage.setPixelRGBA(x, y, abgr);
-            }
-        }
-
-        return nativeImage;
-    }
 
     @Override
     protected boolean onWidgetClicked(double mouseX, double mouseY, int button) {
